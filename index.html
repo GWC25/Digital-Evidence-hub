@@ -715,7 +715,81 @@
     pointer-events: none;
   }
 
-  /* Responsive */
+  /* HoA Tracker specific */
+  .hoa-rag-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    font-size: .8rem; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .hoa-rag-1 { background: var(--r4); } /* Confident = green */
+  .hoa-rag-2 { background: var(--r5); } /* Good = blue */
+  .hoa-rag-3 { background: var(--r3); } /* Acceptable = amber */
+  .hoa-rag-4 { background: var(--r2); } /* Concern = orange */
+  .hoa-rag-5 { background: var(--r1); } /* Urgent = red */
+  .hoa-rag-tbc { background: var(--col-border); color: var(--col-muted); font-size:.7rem; }
+
+  .hoa-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .hoa-card {
+    background: var(--col-surface);
+    border: 1px solid var(--col-border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    transition: box-shadow .15s;
+    cursor: pointer;
+  }
+  .hoa-card:hover { box-shadow: var(--shadow-md); }
+  .hoa-card:focus-visible { outline: 3px solid var(--col-accent); }
+  .hoa-card-info { flex: 1; min-width: 0; }
+  .hoa-card-code { font-family: var(--font-mono); font-size: .8rem; font-weight: 500; color: var(--col-muted); }
+  .hoa-card-dept { font-size: .85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hoa-card-meta { font-size: .75rem; color: var(--col-muted); margin-top: 2px; }
+  .hoa-met-badge {
+    font-size: .68rem; font-weight: 700; padding: 2px 7px; border-radius: 100px;
+  }
+  .hoa-met-y { background: #dcfce7; color: #166534; }
+  .hoa-met-n { background: #fee2e2; color: #991b1b; }
+
+  .priority-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+  .priority-table th {
+    text-align: left; padding: 8px 12px;
+    background: var(--col-bg); border-bottom: 2px solid var(--col-border);
+    font-size: .73rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--col-muted);
+  }
+  .priority-table td { padding: 10px 12px; border-bottom: 1px solid var(--col-border); vertical-align: top; }
+  .priority-table tr:last-child td { border-bottom: none; }
+  .priority-table tr:hover td { background: var(--col-bg); }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .detail-field { margin-bottom: 12px; }
+  .detail-field label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--col-muted); margin-bottom: 4px; }
+  .detail-field .field-value { font-size: .875rem; }
+  .detail-full { grid-column: span 2; }
+
+  .summary-bar {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .summary-pill {
+    background: var(--col-surface); border: 1px solid var(--col-border);
+    border-radius: var(--radius-lg); padding: 12px 18px;
+    text-align: center; min-width: 120px;
+  }
+  .summary-pill .pill-value {
+    font-family: var(--font-display); font-size: 1.6rem; color: var(--col-accent); line-height: 1;
+  }
+  .summary-pill .pill-value.urgent { color: var(--r1); }
+  .summary-pill .pill-label { font-size: .72rem; color: var(--col-muted); margin-top: 3px; }
+
+  .no-lead { color: var(--r1); font-weight: 600; font-size: .8rem; }
+  .has-lead { color: var(--r4); font-size: .8rem; }
+
   @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); transition: transform .3s; }
     .sidebar.open { transform: none; }
@@ -796,6 +870,9 @@
       <button class="nav-item" onclick="navigateTo('curriculum-areas')">
         <span class="nav-icon">⊞</span> Curriculum Areas
       </button>
+      <button class="nav-item" onclick="navigateTo('hoa-tracker')">
+        <span class="nav-icon">◉</span> HoA Tracker
+      </button>
       <button class="nav-item" onclick="navigateTo('staff-development')">
         <span class="nav-icon">◎</span> Staff Development
       </button>
@@ -867,6 +944,11 @@
           <div class="card-title">Accountability Coverage</div>
           <div id="accountability-coverage"></div>
         </div>
+      </div>
+
+      <div class="mt-16 card">
+        <div class="card-title">HoA Tracker — At a Glance</div>
+        <div id="dashboard-hoa-summary"></div>
       </div>
 
       <div class="mt-16 card">
@@ -1060,6 +1142,90 @@
       </div>
 
       <div id="areas-container"></div>
+    </section>
+
+    <!-- ====================================================
+         HOA TRACKER
+    ==================================================== -->
+    <section class="page-section" id="section-hoa-tracker" aria-label="HoA Tracker">
+      <div class="page-header flex-between">
+        <div>
+          <h2>HoA Tracker</h2>
+          <p>Head of Area Digital Tracker — Meeting 1 · 2025–27 · Digital Pedagogy Coach</p>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary btn-sm" onclick="exportHoACSV()">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="tab-bar" role="tablist">
+        <button class="tab-btn active" role="tab" aria-selected="true" onclick="switchTab(this,'hoa-tab-','overview')">RAG Overview</button>
+        <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab(this,'hoa-tab-','priority')">Priority Dashboard</button>
+        <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab(this,'hoa-tab-','detail')">Area Detail</button>
+      </div>
+
+      <!-- TAB 1: RAG OVERVIEW -->
+      <div class="tab-panel active" id="hoa-tab-overview">
+        <div class="filter-bar" style="margin-bottom:16px">
+          <div class="form-group">
+            <label for="hoa-filter-rag">Filter by RAG</label>
+            <select id="hoa-filter-rag" onchange="renderHoAOverview()">
+              <option value="">All ratings</option>
+              <option value="1">1 — Confident</option>
+              <option value="2">2 — Developing</option>
+              <option value="3">3 — Acceptable</option>
+              <option value="4">4 — Concern</option>
+              <option value="5">5 — Urgent</option>
+              <option value="tbc">TBC — Not yet rated</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="hoa-filter-met">Meeting held</label>
+            <select id="hoa-filter-met" onchange="renderHoAOverview()">
+              <option value="">All</option>
+              <option value="Y">Yes</option>
+              <option value="N">Not yet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="hoa-filter-sort">Sort by</label>
+            <select id="hoa-filter-sort" onchange="renderHoAOverview()">
+              <option value="urgency">Urgency (highest first)</option>
+              <option value="alpha">Alphabetical (code)</option>
+              <option value="met">Meeting held first</option>
+            </select>
+          </div>
+          <div class="form-group" style="align-self:flex-end">
+            <button class="btn btn-secondary" onclick="resetHoAFilters()">Clear</button>
+          </div>
+        </div>
+        <div class="hoa-overview-grid" id="hoa-overview-grid"></div>
+      </div>
+
+      <!-- TAB 2: PRIORITY DASHBOARD -->
+      <div class="tab-panel" id="hoa-tab-priority">
+        <div class="summary-bar" id="hoa-priority-summary"></div>
+        <div class="card">
+          <div class="card-title">Areas rated 4 (Concern) or 5 (Urgent) — immediate coaching priority</div>
+          <div id="hoa-priority-table-wrapper"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: AREA DETAIL -->
+      <div class="tab-panel" id="hoa-tab-detail">
+        <div class="flex gap-8 mb-16" style="align-items:flex-end">
+          <div class="form-group" style="margin-bottom:0;min-width:260px">
+            <label for="hoa-detail-select">Select area</label>
+            <select id="hoa-detail-select" onchange="renderHoADetail()">
+              <option value="">— choose an area —</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="saveHoADetail()">Save changes</button>
+        </div>
+        <div id="hoa-detail-content">
+          <div class="empty-state"><div class="icon">◉</div>Select an area above to view and edit its detail.</div>
+        </div>
+      </div>
     </section>
 
     <!-- ====================================================
@@ -1430,8 +1596,14 @@ let DB = {
     {id:'rf3', name:'EDS Categories', enabled: true},
     {id:'rf4', name:'Teams Environment', enabled: true},
   ],
-  meta: { version: '1.0', created: new Date().toISOString() }
+  meta: { version: '1.0', created: new Date().toISOString() },
+  hoaTracker: [] // populated by DEFAULT_HOA_TRACKER below
 };
+
+// ================================================================
+//  HOA TRACKER DEFAULT DATA (pre-populated from spreadsheet)
+// ================================================================
+const DEFAULT_HOA_TRACKER = [{"code":"AGF","dept":"Arts, Graphics & Fashion","hoaName":"Chrissandra Boxley","campus":"Loxton","metM1":"Y","formM1":"Y","rag":3,"digitalLead":"Ronnie Houselander-Cook","futureDigitalLead":"","meeting1Summary":"Really positive meeting with clear understanding of role and future involvement.","strengths":"Good digital foundation. Staff are visual learners \u2014 examples of good practice motivate them. Ronnie Houselander-Cook is a strong digital lead.","afis":"Staff CPD needed in Digital TLA \u2014 all six CPD areas rated High. Digital learning environments not checked this year.","priorityActions":"Book Digital Learning Walk with Chrissandra. Team CPD session on Teams environments. Share examples of strong Digital TLA.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"Book Digital Learning Walk with Chrissandra. Team CPD session on Teams environments. Share examples of strong Digital TLA."},{"code":"AHE","dept":"Access to HE","hoaName":"","campus":"???","metM1":"N","formM1":"N","rag":null,"digitalLead":"Stephanie Lee","futureDigitalLead":"","meeting1Summary":"No meeting held.","strengths":"","afis":"Meeting not yet arranged. No form submitted.","priorityActions":"Arrange meeting. Identify HoA contact. Complete survey form.","teachMeets":"","coaching1to1":"Beth Carey - Escape Room resources - Is this the correct Area for Beth?","asyncTraining":"","nextAction":""},{"code":"ANM","dept":"Animal Management","hoaName":"Laura Link","campus":"Puxton Park","metM1":"Y","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Really engaged and positive about the potential and bigger picture of digital learning and the impact.","strengths":"Genuine enthusiasm for digital learning and its potential. Good understanding of the bigger picture.","afis":"No form submitted. No Digital Lead identified. RAG not yet recorded.","priorityActions":"Follow up with form. Identify Digital Lead. Agree priority actions.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"BUI","dept":"Building Services (Construction)","hoaName":"Richard Hanney","campus":"SWSC","metM1":"Y","formM1":"N","rag":3,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Idea for clocking in/out resource. Wants to teach MS Fundamentals. Business start-up program.","strengths":"Clear industry-relevant digital skills vision \u2014 clocking in, MS Fundamentals, business start-up. Richard is motivated.","afis":"No survey form. No Digital Lead identified. Teams environment not assessed.","priorityActions":"Support Richard with clocking-in resource design. Book MS Fundamentals session. Identify Digital Lead.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"Need to sit with Richard and Liam to flesh out plans for Clcoking In and Out systems, MS Fundamentals, Business Start-Up Programmes, how we can build a foundation and culture of learning."},{"code":"BUS","dept":"Business & Tourism","hoaName":"Ben Melhuish","campus":"???","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"No direct HoA meeting. Laura Link attended cross-area meeting (BUS/ANM/PRS).","strengths":"","afis":"BUS HoA (Louise Perkins or Ben Melhuish) did not attend meeting.","priorityActions":"Rearrange meeting with BUS HoA directly. Complete survey.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"CED","dept":"Community Education","hoaName":"Charlotte Hynes","campus":"Multi","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Charlotte declined initial meeting. Becky Morris to facilitate introduction.","strengths":"","afis":"No meeting. No form. No engagement yet.","priorityActions":"Use Becky Morris as bridge. Rearrange meeting with Charlotte. Explain survey purpose.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"CON","dept":"Construction Trades","hoaName":"Richard Hanney","campus":"SWSC","metM1":"Y","formM1":"Y","rag":3,"digitalLead":"Victoria Howell","futureDigitalLead":"","meeting1Summary":"No meeting held.","strengths":"","afis":"No meeting. No form. No engagement.","priorityActions":"Identify CON HoA. Arrange meeting. Complete survey.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"CTC","dept":"Construction Training Centre","hoaName":"John Fowler","campus":"CTC","metM1":"Y","formM1":"Y","rag":3,"digitalLead":"John Fowler, Dave Evans","futureDigitalLead":"","meeting1Summary":"Site visit arranged. Really positive and engaged. Keen to develop and showcase good practice.","strengths":"Strong existing digital practice \u2014 Teams, Forms, rubrics, assignments. Industry tools in active use (DTS, CITB). Digital Health Checks referenced in survey.","afis":"Staff CPD in data/evidence use and subject-specific software rated High. Moderate in AI literacy \u2014 none needed currently.","priorityActions":"Observe and document good practice for wider college sharing. Support John on assignment-based learning. Connect Dave Evans to Digital Lead network.","teachMeets":"","coaching1to1":"Explored Teams Learning Environments with John Fowler. Discussed current learner support and digital confidence.","asyncTraining":"","nextAction":"Touch base later in May half term to discuss impact of Teams Learning Environments and how I can support."},{"code":"DCI","dept":"Digital Computing & IT","hoaName":"Sean Shearing","campus":"UCW & Knightstone","metM1":"Y","formM1":"N","rag":1,"digitalLead":"Ben Hobbs","futureDigitalLead":"","meeting1Summary":"Sean understands the angle. Invited Graeme in to explore practice and advise on further progression.","strengths":"Confident, strong digital foundations. Highest-performing area digitally. Good model for others.","afis":"No Digital Lead formally identified. Sean sees himself as Stage 3 already \u2014 may need challenge rather than support.","priorityActions":"Identify a Digital Lead from Sean's team. Arrange observation visit. Use DCI as showcase for college. Consider Mark Barnett SharePoint/Smart Assessor integration project.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"Go and see them in practice to discuss how we can move the team forward, or learn from exceptional practice."},{"code":"EEY","dept":"Education & Early Years","hoaName":"Rachael Moger","campus":"Knightstone","metM1":"N","formM1":"Y","rag":3,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Support needed for digital TLA specifically around Assessment & Data. Form completed.","strengths":"Survey completed \u2014 good engagement through the form.","afis":"HoA did not attend meeting. CPD needs in assessment and data use flagged. Becky Moger is a proxy contact.","priorityActions":"Arrange direct meeting with Rachael Moger. Follow up with Liam Fisher re Digital Lead role. Focus CPD on assessment and data use.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"EFE","dept":"Engineering WBL FE","hoaName":"","campus":"SWSC","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"No meeting held.","strengths":"","afis":"No meeting. No form. No engagement.","priorityActions":"Identify EFE HoA. Arrange meeting. Note Smart Assessor EPA context for WBL.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"EGL","dept":"English","hoaName":"Libby Heath-Tavener","campus":"Multi","metM1":"Y","formM1":"N","rag":3,"digitalLead":"Georgina Berritta","futureDigitalLead":"Joel Baylis, Denholm Wilcox, Diego Fanhe","meeting1Summary":"Meeting with Libby Heath-Tavener and Jason Clear. GoTeach Maths discussed. Century first college approach needed. 35 hours funded Maths in curriculum.","strengths":"Clear understanding of Century's potential for funded digital hours. Libby engaged on College-wide Century deployment.","afis":"No form submitted. No formal Digital Lead. Maths and English need cross-college Century approach confirmed with Sam, Mat, and Neil.","priorityActions":"1:1 with Libby before May half-term re Century. Wider team session planned. Confirm Century as college-wide digital hours vehicle for E&M. Possible Champions: Joel Baylis, Denholm Wilcox, Diego Fanhe.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"1) Arrange training for Libby with Sam at Century.      2) How do we support learners who are absent - Digital Learning Environments first, sharing resources, capture teacher content, then discuss who to evidence, track, build.     3) Eng & Maths SharePoint needed - where's the link to Century"},{"code":"EHE","dept":"Engineering Higher Education","hoaName":"","campus":"SWSC","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"No meeting held.","strengths":"","afis":"No meeting. No form. GKN Aerospace and Rolls-Royce partnership context relevant.","priorityActions":"Identify EHE HoA. Arrange meeting. Connect to employer expectations re BIM and digital engineering.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"EMV","dept":"Engineering & Motor Vehicle","hoaName":"Andreas ???","campus":"SWSC","metM1":"Y","formM1":"N","rag":2,"digitalLead":"Felix Coles","futureDigitalLead":"","meeting1Summary":"Briefly met re other TLA strategies. Felix is Deputy to Andreas and future HoA.","strengths":"Advanced Forms use discussed \u2014 auto marking, Copilot in Excel for analytics. Enthusiastic about AI-assisted assessment.","afis":"Felix is Deputy \u2014 Andreas Panos is current HoA. EV diagnostics and digital tools not yet formally mapped. No form.","priorityActions":"Arrange meeting with Andreas (HoA) and Felix. Book Forms/Copilot coaching session. Map EV digital skills to EDS categories.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"Reach out for Teach Meet following discussion around Teams Learning Environment and Digital Skills"},{"code":"ENG","dept":"Engineering (General)","hoaName":"Thanos Adamos","campus":"SWSC","metM1":"Y","formM1":"N","rag":2,"digitalLead":"Thanos Adamos","futureDigitalLead":"","meeting1Summary":"Very engaged. Wants more engaging and fun learning to move away from PowerPoint-driven teaching.","strengths":"Thanos is self-aware about digital limitations and motivated to improve. Willing to be Digital Lead for his area.","afis":"Teams environment needs assessing and standardising. No form submitted. Over-reliance on PowerPoint slides.","priorityActions":"Assess Thanos's Teams environment. Book session on dynamic PowerPoint/Sway approaches. Confirm Thanos as Digital Lead.","teachMeets":"","coaching1to1":"Owen Readon - Digital Accessibility, Teams, and Assessment","asyncTraining":"","nextAction":"Need to arrange 1:1 with Thanos on Teams Digital Learning Environment. I will first Health Check his Teams area and provide the report. I will then walk him through it so he can run the HC for others"},{"code":"ESO","dept":"ESOL","hoaName":"Alexia Sporidis","campus":"Multi","metM1":"Y","formM1":"N","rag":4,"digitalLead":"John ???","futureDigitalLead":"","meeting1Summary":"Major IT infrastructure concerns raised. SpringPod Virtual Work Experience discussed. Team needs significant support.","strengths":"Alexia is very positive and forward-thinking. SpringPod partnership potential (UCAS). Refresher on Teams and Accessibility planned.","afis":"Team needs a lot of support. IT infrastructure is a major barrier. Monitoring and intervention not yet systematic.","priorityActions":"Alexia to book team session. Refresher on Teams and Accessibility/Inclusion. Hand SpringPod investigation to Liam Fisher. Explore ESOL-specific digital inclusion strategy.","teachMeets":"Booking for Team post Easter - Refresher on Teams & Accessibility / Inclusion\n- Come and see ESOL Team","coaching1to1":"","asyncTraining":"","nextAction":"Follow up with Alexia the Teach-Meet on accessibility and Teams refresh"},{"code":"EXT","dept":"External Contracts / Provision","hoaName":"","campus":"Multi","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"No meeting held.","strengths":"","afis":"No meeting. No form. Prison provision (SOMAX) context relevant \u2014 digital access restricted.","priorityActions":"Identify EXT lead. Consider SOMAX-specific digital constraints in any planning.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"FAU","dept":"FIP Autism","hoaName":"Andy Girling / Jess Gill","campus":"???","metM1":"Y","formM1":"N","rag":2,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Meeting with Andy Girling, Jess Gill, Liz Burkey, Joe Radcliffe. Licences, SharePoint, AT tools discussed.","strengths":"Strong AT awareness. Jess Gill keen on staff development \u2014 'Learning Accessible Digitally'. Accessibility toolkit shared.","afis":"Staff need to develop mastery of AT tools to support learners. No form. No formal Digital Lead.","priorityActions":"Meet Liz Burkey post-Easter re adaptive/intelligent TLA for SEND. Support Jess Gill with staff AT training. Add videos to accessibility toolkit.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"1) What existing licenses for Netflix etc.      2) Gather Feedback about the Accessibility Toolkit resource.      3) Training options for staff (Jess Gill) - Learning Accessible Digitally.      4) Meet with Liz Burkey after Easter about smart changes to teaching practice to enable adaptive and intelligent TLA that reaches SEND learners and ALL with hidden needs."},{"code":"FCO","dept":"FIP Complex Needs","hoaName":"","campus":"???","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"No separate meeting. Covered partially in FIP meeting.","strengths":"","afis":"No direct HoA meeting. AT and device reliability is a safeguarding issue for this cohort.","priorityActions":"Include FCO in FIP AT strategy. Confirm device and software reliability with IT.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"FEH","dept":"FIP Supported Employment Excellence","hoaName":"Jess Gill","campus":"???","metM1":"Y","formM1":"Y","rag":2,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Form submitted. Support needed for digital TLA around Assessment & Data.","strengths":"Jess Gill engaged via FIP meeting. Liam Fisher identified as Digital Lead.","afis":"Assessment and data digital skills are the priority gap. Digital daily living tools for SOLEX pathway not yet mapped.","priorityActions":"Follow up with Jess on FEH specific needs. Map SOLEX digital transition skills to EDS categories.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"FPL","dept":"FIP Pre-Vocational","hoaName":"","campus":"???","metM1":"N","formM1":"N","rag":null,"digitalLead":"Becky Salter???","futureDigitalLead":"","meeting1Summary":"No separate meeting.","strengths":"","afis":"No meeting. FPL learners need digital daily living skills (NHS App, banking, travel).","priorityActions":"Include FPL in FIP digital strategy. Connect to Learning Without Barriers work.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"Go and see them in practice to discuss how we can move the team forward, or learn from exceptional practice."},{"code":"GMA","dept":"Games, Media & Animation","hoaName":"Gina Hele","campus":"Loxton","metM1":"Y","formM1":"N","rag":1,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Gina confident digital foundations are strong. Invited Graeme in to explore and advise.","strengths":"Strong digital TLA already embedded. Gina is open to peer learning and external challenge.","afis":"No form submitted. No formal Digital Lead from GMA identified. Practice not yet documented for wider sharing.","priorityActions":"Arrange observation visit. Document and share GMA good practice. Identify Digital Lead from team.","teachMeets":"Exploring the ethical use of AI in the learning experience and how to build curriculum to support AI use and where to draw the line.","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"HAC","dept":"Health (inc. Health T-Level)","hoaName":"Dale Bond","campus":"HALSC","metM1":"Y","formM1":"Y","rag":4,"digitalLead":"Dale Bond","futureDigitalLead":"","meeting1Summary":"Training already planned. Dale Bond identified as Digital Lead.","strengths":"Dale Bond is engaged and has a clear understanding of how Graeme can support his team.","afis":"Team very inexperienced in TLA and digital assessment. All CPD areas rated High. Assessment and data use are priority gaps.","priorityActions":"Deliver planned training. Focus on effective Teams assessment. Coach team on multiple digital feedback formats. Dale to lead Health Checks in his area.","teachMeets":"Completed: Teams Learning Foundations NEXT: - Using ProMonitor effectively and how this integrates into Teams\n- Effective use of Teams functions for inclusive learning","coaching1to1":"Teams Learning Environment with Amy Walker; Transcripts for Video training with Amanda McLaurin","asyncTraining":"","nextAction":"Reach out to plan next phase of Digital support"},{"code":"HBH","dept":"Hair, Beauty & Hospitality","hoaName":"Jenna Ratcliffe","campus":"Knightstone","metM1":"Y","formM1":"Y","rag":1,"digitalLead":"Nicola Smith & Jasmine Nickells","futureDigitalLead":"","meeting1Summary":"Digital Hours not needed as a formal requirement. Digital skills embedded in portfolios, social media, editing.","strengths":"Strong embedded digital skills practice. Two Digital Leads identified. Good model for other vocational areas.","afis":"Digital hours not formally tracked. No explicit EDS mapping in BP.","priorityActions":"Support Nicola and Jasmine as Digital Leads. Help Jenna map existing digital practice to EDS for BP purposes.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"Reach out to discuss supporting observations and learning walks to see the impact of digital infrastructure on learning delivery."},{"code":"MAT","dept":"Maths","hoaName":"Jason Clear","campus":"Multi","metM1":"Y","formM1":"N","rag":3,"digitalLead":"Jed Randall","futureDigitalLead":"Joel Baylis, Denholm Wilcox, Diego Fanhe","meeting1Summary":"Meeting with Libby Heath-Tavener and Jason Clear. GoTeach Maths discussed. 100 hours within Maths. Century potential.","strengths":"Potential Champions identified: Joel Baylis, Denholm Wilcox, Diego Fanhe. GoTeach Maths in active use.","afis":"No form submitted. 100 digital hours requirement needs Century or equivalent. Desmos used in GCSE exams \u2014 needs formal integration.","priorityActions":"1:1 with Libby re Century before May half-term. Confirm Desmos as formal digital tool in BP. Develop Maths Digital Champions programme.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"PAP","dept":"Performance & Production","hoaName":"Chrissandra Boxley","campus":"Loxton","metM1":"Y","formM1":"Y","rag":4,"digitalLead":"Ronnie Houselander-Cook","futureDigitalLead":"","meeting1Summary":"See AGF \u2014 same HoA. Ronnie is Digital Lead for both areas.","strengths":"See AGF notes. Digital self-tape skills are a baseline employability requirement in this area.","afis":"See AGF. Digital practice not yet formally mapped to EDS.","priorityActions":"See AGF actions. Ensure PAP-specific digital tools (GarageBand, QLab, Spotlight) are captured in mapping.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"PRA","dept":"Professional Apprenticeships","hoaName":"Georgina Hayden","campus":"Multi","metM1":"Y","formM1":"N","rag":3,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Georgina will work with wider team to explore digital skills development.","strengths":"Georgina is engaged and willing to involve her team in the process.","afis":"No form. No Digital Lead. EPA digital evidence requirements not yet mapped.","priorityActions":"Follow up with Georgina. Map Smart Assessor EPA evidence to EDS categories. Identify Digital Lead.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"PRE","dept":"Employment Services (Pre-employment)","hoaName":"Laura Taylor","campus":"SWSC","metM1":"Y","formM1":"N","rag":3,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Laura was very positive. Invited Graeme to meet the team. Teams Teaching Room at SWSC and TurnItIn work needed.","strengths":"Laura is positive and proactive. TurnItIn training already delivered as a Teach Meet \u2014 good practice.","afis":"No form. No Digital Lead. SWSC Teams Teaching Room needs attention.","priorityActions":"Book team visit at SWSC. Assess SWSC Teams Teaching Room. Identify Digital Lead. Follow up on TurnItIn integration in Teams.","teachMeets":"Embedding Turnitin within Teams to support integrity of learner submissions.","coaching1to1":"Liam Benson - Enhance formative assessment opportunities. Use results to adapt next steps in delivery.","asyncTraining":"","nextAction":"Reach out for Teach-Meet on Teams Learning Environments and Accessibility"},{"code":"PRS","dept":"Professional Studies","hoaName":"Louise Perkins???","campus":"???","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"No meeting held. Laura Link attended cross-area meeting but PRS not specifically covered.","strengths":"","afis":"No meeting. No form. HE digital research skills gap relevant for this cohort.","priorityActions":"Identify PRS HoA. Arrange meeting. Focus on academic digital research skills for HE/professional context.","teachMeets":"","coaching1to1":"Coaching with Lauren Bester following TLAM request. Worked around Teams and Digital querries","asyncTraining":"","nextAction":""},{"code":"PSF","dept":"Public Services","hoaName":"David Beresford","campus":"Knightstone","metM1":"Y","formM1":"N","rag":5,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Really positive. Totally gets the idea for working together. Drone use and GPS discussed.","strengths":"David fully engaged and understanding of how digital fits in PSF curriculum. Drone/GPS industry context strong.","afis":"No form submitted. No Digital Lead identified. RAG 5 \u2014 significant CPD need despite positive attitude.","priorityActions":"Complete survey form with David. Identify Digital Lead. Map drone/GPS and GIS tools to EDS categories.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":"Dave needs 1:1 support on specifically what digital skills can be developed and how. He's keen to explore Drone and GPS data. Might appreciate a sit down 1:1 session to flesh out the plans."},{"code":"SKB","dept":"Skills Bootcamps","hoaName":"Becky Morris","campus":"Multi","metM1":"Y","formM1":"N","rag":4,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Becky was very engaged. Will share Forms link with others and Teams support page.","strengths":"Becky is a connector \u2014 willing to share resources across her network. Proactive engagement.","afis":"No form yet. No Digital Lead. CED (Charlotte Hynes) introduced via Becky as a bridge contact.","priorityActions":"Follow up for survey completion. Support Becky to reach Charlotte Hynes (CED). Identify Digital Lead for SKB.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"SMS","dept":"Sixth Form","hoaName":"Maria Miles","campus":"Loxton","metM1":"Y","formM1":"Y","rag":2,"digitalLead":"Ethan Shi","futureDigitalLead":"","meeting1Summary":"Digital Hours not a key focus for Sixth Form. CVs, media editing, portfolios. Plan to support some tutors.","strengths":"Digital Health Checks already in use (Maria's team completed one). Ethan Shi identified as Digital Lead. Good existing awareness.","afis":"Digital Hours expectations unclear for SMS \u2014 needs clarification with Ben M and Neil D. Michael Foster needs support with Teams comms/organisation.","priorityActions":"Clarify SMS digital hours expectations with Ben M and Neil D. Support Michael Foster on Teams organisation. Build on Ethan Shi's Digital Lead role.","teachMeets":"How to use AI in the learning experience - Ethical use for learners","coaching1to1":"Setting up a Power Automate driven system that sends reports to all learners to reduce Admin time","asyncTraining":"","nextAction":"Reach out for update on Power Automate systems."},{"code":"SMX","dept":"SOMAX (Offsite / Prison)","hoaName":"John Fowler","campus":"NSI","metM1":"Y","formM1":"Y","rag":2,"digitalLead":"John Fowler, Dave Evans","futureDigitalLead":"","meeting1Summary":"See CTC. John manages both CTC and SMX.","strengths":"See CTC. SOMAX has restricted digital access \u2014 foundational digital skills for post-release employment is the priority.","afis":"Digital access restrictions mean standard approaches don't apply. No specific SMX mapping yet.","priorityActions":"See CTC actions. Develop SOMAX-specific digital skills approach accounting for infrastructure restrictions.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""},{"code":"SPO","dept":"Sport","hoaName":"Dan Pratlett","campus":"Loxton","metM1":"N","formM1":"N","rag":null,"digitalLead":"","futureDigitalLead":"","meeting1Summary":"Meeting declined or needs rearranging.","strengths":"","afis":"Meeting not held. Wearable tech (Garmin, Catapult) and video analysis (Hudl, Dartfish) relevant to this area.","priorityActions":"Rearrange meeting. Identify HoA contact. Map sport-specific digital tools to EDS categories.","teachMeets":"","coaching1to1":"","asyncTraining":"","nextAction":""}];
 
 // ================================================================
 //  CURRICULUM AREAS DATA
@@ -1640,6 +1812,9 @@ function initAreas() {
   if (DB.areas.length === 0) {
     DB.areas = JSON.parse(JSON.stringify(DEFAULT_AREAS));
   }
+  if (!DB.hoaTracker || DB.hoaTracker.length === 0) {
+    DB.hoaTracker = JSON.parse(JSON.stringify(DEFAULT_HOA_TRACKER));
+  }
 }
 
 function setTodayDate() {
@@ -1674,7 +1849,8 @@ function navigateTo(page) {
     'external-cpd': 'External',
     'value-for-money': 'Value',
     'report-builder': 'Report',
-    'settings': 'Settings'
+    'settings': 'Settings',
+    'hoa-tracker': 'HoA Tracker'
   };
 
   document.querySelectorAll('.nav-item').forEach(btn => {
@@ -1697,6 +1873,7 @@ function navigateTo(page) {
   if (page === 'value-for-money') renderVFM();
   if (page === 'staff-development') renderStaffRecords();
   if (page === 'report-builder') renderReportBuilder();
+  if (page === 'hoa-tracker') initHoATracker();
 }
 
 // ================================================================
@@ -2246,8 +2423,216 @@ function renderDashboard() {
     : '<div class="empty-state"><div class="icon">📋</div>No entries yet.</div>';
 
   renderAccountabilityCoverage();
+  if (typeof renderDashboardHoASummary === 'function') renderDashboardHoASummary();
 }
 
+function renderDashboardHoASummary() {
+  const el = document.getElementById('dashboard-hoa-summary');
+  if (!el || !DB.hoaTracker || !DB.hoaTracker.length) return;
+  const total = DB.hoaTracker.length;
+  const met = DB.hoaTracker.filter(a => a.metM1 === 'Y').length;
+  const rated = DB.hoaTracker.filter(a => a.rag !== null);
+  const avgRag = rated.length ? (rated.reduce((s,a) => s + a.rag, 0) / rated.length).toFixed(1) : '—';
+  const priority = DB.hoaTracker.filter(a => a.rag >= 4).length;
+  const leads = DB.hoaTracker.filter(a => a.digitalLead && a.digitalLead.trim()).length;
+  const urgentAreas = DB.hoaTracker.filter(a => a.rag >= 4).map(a =>
+    `<span class="mini-tag" style="background:${a.rag===5?'#fee2e2':'#ffedd5'};color:${a.rag===5?'#991b1b':'#9a3412'}">${a.code}</span>`
+  ).join(' ');
+  el.innerHTML = `
+    <div class="grid-3 mb-16">
+      <div class="stat-card"><div class="stat-value">${met}/${total}</div><div class="stat-label">Meetings held (M1)</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:${parseFloat(avgRag)>=4?'var(--r1)':parseFloat(avgRag)>=3?'var(--r3)':'var(--r4)'}">${avgRag}</div><div class="stat-label">Average RAG (1=confident · 5=urgent)</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--r2)">${priority}</div><div class="stat-label">Priority areas (RAG 4–5)</div></div>
+    </div>
+    ${priority > 0 ? `<div class="text-sm mb-8" style="font-weight:600">Requiring immediate attention:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${urgentAreas}</div>` : ''}
+    <div class="text-sm text-muted">Digital Leads identified: <strong>${leads}</strong> of ${total} areas &nbsp;·&nbsp; <button class="btn btn-sm btn-secondary" onclick="navigateTo('hoa-tracker')">Open HoA Tracker →</button></div>`;
+}
+
+// ================================================================
+//  HOA TRACKER FUNCTIONS
+// ================================================================
+function hoaRagLabel(r) { return ['','Confident','Developing','Acceptable','Concern','Urgent'][r] || 'TBC'; }
+function hoaRagBadge(r) {
+  if (!r) return '<span class="hoa-rag-badge hoa-rag-tbc" aria-label="Not yet rated">TBC</span>';
+  return `<span class="hoa-rag-badge hoa-rag-${r}" aria-label="RAG ${r}: ${hoaRagLabel(r)}">${r}</span>`;
+}
+function hoaMetBadge(m) {
+  return m === 'Y' ? '<span class="hoa-met-badge hoa-met-y">Met ✓</span>' : '<span class="hoa-met-badge hoa-met-n">Not yet</span>';
+}
+
+function initHoATracker() {
+  const sel = document.getElementById('hoa-detail-select');
+  if (sel && sel.options.length <= 1) {
+    DB.hoaTracker.forEach(a => sel.add(new Option(`${a.code} — ${a.dept}`, a.code)));
+  }
+  renderHoAOverview();
+  renderHoAPriority();
+}
+
+function resetHoAFilters() {
+  ['hoa-filter-rag','hoa-filter-met'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  const s = document.getElementById('hoa-filter-sort'); if(s) s.value = 'urgency';
+  renderHoAOverview();
+}
+
+function renderHoAOverview() {
+  const ragFilter = document.getElementById('hoa-filter-rag')?.value || '';
+  const metFilter = document.getElementById('hoa-filter-met')?.value || '';
+  const sort = document.getElementById('hoa-filter-sort')?.value || 'urgency';
+  let areas = [...DB.hoaTracker];
+  if (ragFilter === 'tbc') areas = areas.filter(a => a.rag === null);
+  else if (ragFilter) areas = areas.filter(a => a.rag === parseInt(ragFilter));
+  if (metFilter) areas = areas.filter(a => a.metM1 === metFilter);
+  if (sort === 'urgency') areas.sort((a,b) => (b.rag||0) - (a.rag||0));
+  else if (sort === 'alpha') areas.sort((a,b) => a.code.localeCompare(b.code));
+  else if (sort === 'met') areas.sort((a,b) => (b.metM1==='Y'?1:0) - (a.metM1==='Y'?1:0));
+  const grid = document.getElementById('hoa-overview-grid');
+  if (!grid) return;
+  if (!areas.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">⊞</div>No areas match these filters.</div>'; return; }
+  grid.innerHTML = areas.map(a => `
+    <div class="hoa-card" tabindex="0" role="button"
+         onclick="openHoADetail('${a.code}')"
+         onkeydown="if(event.key==='Enter'||event.key===' ')openHoADetail('${a.code}')"
+         aria-label="${a.code} ${a.dept}, click for detail">
+      ${hoaRagBadge(a.rag)}
+      <div class="hoa-card-info">
+        <div class="hoa-card-code">${a.code}</div>
+        <div class="hoa-card-dept" title="${a.dept}">${a.dept}</div>
+        <div class="hoa-card-meta">
+          ${hoaMetBadge(a.metM1)}
+          ${a.digitalLead?.trim() ? `<span class="has-lead" style="margin-left:6px">✓ ${esc(a.digitalLead.split(',')[0].trim())}</span>` : '<span class="no-lead" style="margin-left:6px">No lead</span>'}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderHoAPriority() {
+  const priority = DB.hoaTracker.filter(a => a.rag >= 4).sort((a,b) => b.rag - a.rag);
+  const summaryEl = document.getElementById('hoa-priority-summary');
+  const tableEl = document.getElementById('hoa-priority-table-wrapper');
+  const total45 = priority.length;
+  const total5 = priority.filter(a => a.rag === 5).length;
+  const metWith45 = priority.filter(a => a.metM1 === 'Y').length;
+  const leadsIn45 = priority.filter(a => a.digitalLead?.trim()).length;
+  if (summaryEl) summaryEl.innerHTML = `
+    <div class="summary-pill"><div class="pill-value">${total45}</div><div class="summary-pill-label">Total RAG 4+</div></div>
+    <div class="summary-pill"><div class="pill-value urgent">${total5}</div><div class="summary-pill-label">RAG 5 — Urgent</div></div>
+    <div class="summary-pill"><div class="pill-value">${metWith45}</div><div class="summary-pill-label">Meetings held (4+)</div></div>
+    <div class="summary-pill"><div class="pill-value">${leadsIn45}</div><div class="summary-pill-label">Digital Leads (4+)</div></div>`;
+  if (!tableEl) return;
+  if (!priority.length) { tableEl.innerHTML = '<div class="empty-state"><div class="icon">✓</div>No areas currently rated 4 or 5.</div>'; return; }
+  tableEl.innerHTML = `<table class="priority-table" role="table" aria-label="Priority areas">
+    <thead><tr><th>RAG</th><th>Area</th><th>HoA</th><th>Digital Lead</th><th>Met M1</th><th>Priority Actions</th><th></th></tr></thead>
+    <tbody>${priority.map(a => `<tr>
+      <td>${hoaRagBadge(a.rag)}</td>
+      <td><strong>${a.code}</strong><br><span class="text-sm text-muted">${esc(a.dept)}</span></td>
+      <td class="text-sm">${esc(a.hoaName)||'—'}</td>
+      <td>${a.digitalLead?.trim() ? `<span class="has-lead">✓ ${esc(a.digitalLead)}</span>` : '<span class="no-lead">Not yet identified</span>'}</td>
+      <td>${hoaMetBadge(a.metM1)}</td>
+      <td class="text-sm">${esc(a.priorityActions)||'—'}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="openHoADetail('${a.code}')">Detail</button></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function openHoADetail(code) {
+  navigateTo('hoa-tracker');
+  setTimeout(() => {
+    document.querySelectorAll('#section-hoa-tracker .tab-btn').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+    const detailBtn = Array.from(document.querySelectorAll('#section-hoa-tracker .tab-btn')).find(t => t.textContent.includes('Area Detail'));
+    if (detailBtn) { detailBtn.classList.add('active'); detailBtn.setAttribute('aria-selected','true'); }
+    document.querySelectorAll('[id^="hoa-tab-"]').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('hoa-tab-detail');
+    if (panel) panel.classList.add('active');
+    const sel = document.getElementById('hoa-detail-select');
+    if (sel) { sel.value = code; renderHoADetail(); }
+  }, 50);
+}
+
+function renderHoADetail() {
+  const code = document.getElementById('hoa-detail-select')?.value;
+  const el = document.getElementById('hoa-detail-content');
+  if (!el) return;
+  if (!code) { el.innerHTML = '<div class="empty-state"><div class="icon">◉</div>Select an area above.</div>'; return; }
+  const a = DB.hoaTracker.find(x => x.code === code);
+  if (!a) { el.innerHTML = '<div class="empty-state">Area not found.</div>'; return; }
+  const ragOpts = [1,2,3,4,5].map(n => `<option value="${n}" ${a.rag===n?'selected':''}>${n} — ${hoaRagLabel(n)}</option>`).join('');
+  el.innerHTML = `
+    <div class="card mb-16">
+      <div class="flex-between mb-16">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:.9rem;color:var(--col-muted)">${a.code}</div>
+          <div style="font-size:1.2rem;font-weight:600">${esc(a.dept)}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">${hoaRagBadge(a.rag)} ${hoaMetBadge(a.metM1)}</div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-field"><label for="hd-hoa">HoA Name</label><input type="text" id="hd-hoa" value="${esc(a.hoaName)}"></div>
+        <div class="detail-field"><label for="hd-campus">Campus</label><input type="text" id="hd-campus" value="${esc(a.campus)}"></div>
+        <div class="detail-field">
+          <label for="hd-rag">RAG Rating</label>
+          <select id="hd-rag"><option value="">— not yet rated —</option>${ragOpts}</select>
+        </div>
+        <div class="detail-field">
+          <label for="hd-met">Meeting 1 held?</label>
+          <select id="hd-met"><option value="Y" ${a.metM1==='Y'?'selected':''}>Yes</option><option value="N" ${a.metM1!=='Y'?'selected':''}>No</option></select>
+        </div>
+        <div class="detail-field"><label for="hd-lead">Identified Digital Lead</label><input type="text" id="hd-lead" value="${esc(a.digitalLead)}"></div>
+        <div class="detail-field"><label for="hd-future-lead">Future Digital Lead</label><input type="text" id="hd-future-lead" value="${esc(a.futureDigitalLead)}"></div>
+        <div class="detail-field detail-full"><label for="hd-summary">Meeting 1 Summary</label><textarea id="hd-summary" rows="3">${esc(a.meeting1Summary)}</textarea></div>
+        <div class="detail-field"><label for="hd-strengths">Strengths</label><textarea id="hd-strengths" rows="4">${esc(a.strengths)}</textarea></div>
+        <div class="detail-field"><label for="hd-afis">AFIs</label><textarea id="hd-afis" rows="4">${esc(a.afis)}</textarea></div>
+        <div class="detail-field detail-full"><label for="hd-actions">Priority Actions</label><textarea id="hd-actions" rows="3">${esc(a.priorityActions)}</textarea></div>
+      </div>
+      <hr class="divider">
+      <div class="card-title">Training & CPD</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label for="hd-teachmeets">Teach Meets attended / delivered</label><textarea id="hd-teachmeets" rows="3">${esc(a.teachMeets)}</textarea></div>
+        <div class="detail-field"><label for="hd-coaching">1:1 Coaching sessions</label><textarea id="hd-coaching" rows="3">${esc(a.coaching1to1)}</textarea></div>
+        <div class="detail-field"><label for="hd-async">Async training completed</label><textarea id="hd-async" rows="2">${esc(a.asyncTraining)}</textarea></div>
+        <div class="detail-field"><label for="hd-next">Next planned action</label><textarea id="hd-next" rows="2">${esc(a.nextAction)}</textarea></div>
+      </div>
+    </div>`;
+}
+
+function saveHoADetail() {
+  const code = document.getElementById('hoa-detail-select')?.value;
+  if (!code) { toast('Select an area first', 'error'); return; }
+  const a = DB.hoaTracker.find(x => x.code === code);
+  if (!a) return;
+  a.hoaName = document.getElementById('hd-hoa')?.value || '';
+  a.campus = document.getElementById('hd-campus')?.value || '';
+  const rv = document.getElementById('hd-rag')?.value;
+  a.rag = rv ? parseInt(rv) : null;
+  a.metM1 = document.getElementById('hd-met')?.value || 'N';
+  a.digitalLead = document.getElementById('hd-lead')?.value || '';
+  a.futureDigitalLead = document.getElementById('hd-future-lead')?.value || '';
+  a.meeting1Summary = document.getElementById('hd-summary')?.value || '';
+  a.strengths = document.getElementById('hd-strengths')?.value || '';
+  a.afis = document.getElementById('hd-afis')?.value || '';
+  a.priorityActions = document.getElementById('hd-actions')?.value || '';
+  a.teachMeets = document.getElementById('hd-teachmeets')?.value || '';
+  a.coaching1to1 = document.getElementById('hd-coaching')?.value || '';
+  a.asyncTraining = document.getElementById('hd-async')?.value || '';
+  a.nextAction = document.getElementById('hd-next')?.value || '';
+  renderHoADetail(); renderHoAPriority(); renderDashboardHoASummary();
+  toast(`${code} saved ✓`, 'success');
+}
+
+function exportHoACSV() {
+  const headers = ['Code','Department','HoA Name','Campus','Met M1','Form M1','RAG','Digital Lead','Future Digital Lead','Meeting 1 Summary','Strengths','AFIs','Priority Actions','Teach Meets','1:1 Coaching','Async Training','Next Action'];
+  const rows = DB.hoaTracker.map(a => [a.code,a.dept,a.hoaName,a.campus,a.metM1,a.formM1,a.rag||'TBC',a.digitalLead,a.futureDigitalLead,a.meeting1Summary,a.strengths,a.afis,a.priorityActions,a.teachMeets,a.coaching1to1,a.asyncTraining,a.nextAction].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','),...rows].join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href=url; link.download=`hoa-tracker-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click(); URL.revokeObjectURL(url);
+  toast('CSV exported ✓','success');
+}
+
+// ================================================================
+//  DASHBOARD HELPERS
+// ================================================================
 function renderAccountabilityCoverage() {
   const el = document.getElementById('accountability-coverage');
   if (!el) return;
@@ -3177,6 +3562,7 @@ function loadJSON() {
         if (loaded.vfmCases) DB.vfmCases = loaded.vfmCases;
         if (loaded.tags) DB.tags = loaded.tags;
         if (loaded.ratingFields) DB.ratingFields = loaded.ratingFields;
+        if (loaded.hoaTracker) DB.hoaTracker = loaded.hoaTracker;
 
         updateJSONStatus(true, file.name);
         renderTagClouds();
