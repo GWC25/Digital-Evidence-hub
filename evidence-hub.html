@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPC Evidence Hub · Weston College</title>
+<link rel="stylesheet" href="css/hub.css">
+</head>
+<body>
+
+<!-- SKIP LINK — WCAG 2.4.1 -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- TOAST REGION -->
+<div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true"
+  aria-labelledby="modal-title" aria-hidden="true">
+  <div class="modal" id="modal-panel" tabindex="-1">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-title">Dialog</h2>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close dialog">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="app-header" role="banner">
+  <div class="header-brand">
+    <div class="header-logo" aria-hidden="true">DPC</div>
+    <div>
+      <div class="header-title">Digital Pedagogy Coach</div>
+      <div class="header-sub">Evidence Hub · Weston College Group</div>
+    </div>
+  </div>
+  <div class="json-status" aria-live="polite">
+    <div class="json-dot" id="json-dot" aria-hidden="true"></div>
+    <span id="json-status-text">No file linked</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.25)"
+      onclick="loadJSON()">📂 Load</button>
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.25)"
+      onclick="saveJSON()">💾 Save</button>
+  </div>
+</header>
+
+<div class="app-body">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" role="navigation" aria-label="Main navigation">
+  <nav>
+    <span class="nav-group-label">Overview</span>
+    <button class="nav-item active" onclick="navigateTo('weekly')"
+      aria-current="page">
+      <span class="nav-icon" aria-hidden="true">📅</span>
+      Weekly View
+      <span class="nav-badge amber" id="weekly-nav-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="navigateTo('dashboard')">
+      <span class="nav-icon" aria-hidden="true">◈</span>
+      Dashboard
+    </button>
+
+    <span class="nav-group-label">Workflow</span>
+    <button class="nav-item" onclick="navigateTo('referrals')">
+      <span class="nav-icon" aria-hidden="true">📥</span>
+      Referrals &amp; Inbox
+      <span class="nav-badge" id="referral-nav-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="navigateTo('threads')">
+      <span class="nav-icon" aria-hidden="true">🔗</span>
+      Active Threads
+    </button>
+
+    <span class="nav-group-label">Capture</span>
+    <button class="nav-item" onclick="navigateTo('quick-capture')">
+      <span class="nav-icon" aria-hidden="true">✦</span>
+      Quick Capture
+    </button>
+    <button class="nav-item" onclick="navigateTo('lra')">
+      <span class="nav-icon" aria-hidden="true">🚶</span>
+      LRA
+    </button>
+    <button class="nav-item" onclick="navigateTo('devobs')">
+      <span class="nav-icon" aria-hidden="true">👁</span>
+      Dev Obs
+    </button>
+
+    <span class="nav-group-label">Evidence</span>
+    <button class="nav-item" onclick="navigateTo('evidence-log')">
+      <span class="nav-icon" aria-hidden="true">▤</span>
+      Evidence Log
+    </button>
+
+    <span class="nav-group-label">Areas &amp; People</span>
+    <button class="nav-item" onclick="navigateTo('curriculum-areas')">
+      <span class="nav-icon" aria-hidden="true">⊞</span>
+      Curriculum Areas
+    </button>
+    <button class="nav-item" onclick="navigateTo('hoa-tracker')">
+      <span class="nav-icon" aria-hidden="true">◉</span>
+      HoA Tracker
+    </button>
+    <button class="nav-item" onclick="navigateTo('staff-dev')">
+      <span class="nav-icon" aria-hidden="true">◎</span>
+      Staff Development
+    </button>
+
+    <span class="nav-group-label">Professional</span>
+    <button class="nav-item" onclick="navigateTo('own-cpd')">
+      <span class="nav-icon" aria-hidden="true">📚</span>
+      CPD &amp; Networking
+    </button>
+    <button class="nav-item" onclick="navigateTo('dl-dashboard')">
+      <span class="nav-icon" aria-hidden="true">📊</span>
+      Digital Leads
+    </button>
+
+    <span class="nav-group-label">Reporting</span>
+    <button class="nav-item" onclick="navigateTo('report-builder')">
+      <span class="nav-icon" aria-hidden="true">⬡</span>
+      Report Builder
+    </button>
+
+    <span class="nav-group-label">System</span>
+    <button class="nav-item" onclick="navigateTo('settings')">
+      <span class="nav-icon" aria-hidden="true">⚙</span>
+      Settings &amp; Tags
+    </button>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content" id="main-content" tabindex="-1">
+
+<!-- ══ WEEKLY VIEW ══════════════════════════════════════════════ -->
+<section class="page-section active" id="section-weekly" aria-labelledby="weekly-h2">
+  <div class="page-header flex-between">
+    <div>
+      <h2 id="weekly-h2">Weekly View</h2>
+      <p>Open this on Monday morning. Close it on Friday knowing what you've done.</p>
+    </div>
+    <div class="flex gap-8">
+      <button class="btn btn-primary" onclick="openNewReferralModal()">+ New referral</button>
+      <button class="btn btn-secondary" onclick="navigateTo('quick-capture')">+ Quick capture</button>
+    </div>
+  </div>
+
+  <div class="weekly-grid">
+    <!-- Tasks -->
+    <div>
+      <div class="card-title flex-between mb-8">
+        This week's tasks
+        <button class="btn btn-sm btn-ghost" onclick="addManualTask()" aria-label="Add task">+ Task</button>
+      </div>
+      <div id="weekly-tasks-list" role="list" aria-label="Outstanding tasks"></div>
+    </div>
+
+    <!-- Active Threads -->
+    <div>
+      <div class="card-title flex-between mb-8">
+        Active threads
+        <button class="btn btn-sm btn-ghost" onclick="navigateTo('threads')">See all</button>
+      </div>
+      <div id="weekly-threads-list" role="list" aria-label="Active workflow threads"></div>
+    </div>
+
+    <!-- Deadlines + Recent -->
+    <div>
+      <div class="card-title mb-8">Upcoming deadlines <span class="text-xs text-muted">(14 days)</span></div>
+      <div id="weekly-deadlines-list" aria-label="Upcoming deadlines" style="margin-bottom:1.5rem"></div>
+      <div class="card-title mb-8">Logged this week</div>
+      <div id="weekly-recent-list" role="list" aria-label="Entries logged this week"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DASHBOARD ═══════════════════════════════════════════════ -->
+<section class="page-section" id="section-dashboard" aria-labelledby="dashboard-h2">
+  <div class="page-header">
+    <h2 id="dashboard-h2">Dashboard</h2>
+    <p>Digital Pedagogy Coach · Evidence Hub · Academic Year 2025/26</p>
+  </div>
+
+  <div class="grid-4 mb-16" role="region" aria-label="Summary statistics">
+    <div class="stat-card c-teal">
+      <div class="stat-n" id="stat-total">0</div>
+      <div class="stat-l">Total entries</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-n" id="stat-week">0</div>
+      <div class="stat-l">This week</div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="stat-n" id="stat-areas">0</div>
+      <div class="stat-l">Areas engaged</div>
+    </div>
+    <div class="stat-card c-amber">
+      <div class="stat-n" id="stat-referrals">0</div>
+      <div class="stat-l">Open referrals</div>
+    </div>
+  </div>
+
+  <div class="grid-2 mb-16">
+    <div class="card">
+      <div class="card-title">Recent entries</div>
+      <div id="dashboard-recent" role="list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Accountability coverage</div>
+      <div id="accountability-coverage"></div>
+    </div>
+  </div>
+
+  <div class="card mb-16" role="region" aria-label="HoA Tracker summary">
+    <div class="card-title">HoA Tracker — at a glance</div>
+    <div id="dashboard-hoa"></div>
+  </div>
+
+  <div class="card" role="region" aria-label="Quality cycle milestones">
+    <div class="card-title">Quality cycle — upcoming milestones</div>
+    <div id="upcoming-anchors"></div>
+  </div>
+</section>
+
+<!-- ══ REFERRALS ═══════════════════════════════════════════════ -->
+<section class="page-section" id="section-referrals" aria-labelledby="referrals-h2">
+  <div class="page-header flex-between">
+    <div>
+      <h2 id="referrals-h2">Referrals &amp; Inbox</h2>
+      <p>Things assigned to you — or that you've self-initiated. Every referral generates a task and links to a thread.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openNewReferralModal()">+ New referral</button>
+  </div>
+
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true"
+      onclick="switchTab(this,'ref-panel-','open')">Open</button>
+    <button class="tab-btn" role="tab" aria-selected="false"
+      onclick="switchTab(this,'ref-panel-','complete')">Complete</button>
+  </div>
+
+  <div class="tab-panel active" id="ref-panel-open">
+    <div id="referral-inbox-list" role="list" aria-label="Open referrals"></div>
+  </div>
+  <div class="tab-panel" id="ref-panel-complete">
+    <div id="referral-complete-list" role="list" aria-label="Completed referrals">
+      <div class="empty-state"><p>Completed referrals will appear here.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ THREADS ═════════════════════════════════════════════════ -->
+<section class="page-section" id="section-threads" aria-labelledby="threads-h2">
+  <div class="page-header flex-between">
+    <div>
+      <h2 id="threads-h2">Active Threads</h2>
+      <p>Workflow chains — each thread is a complete impact story from referral to outcome.</p>
+    </div>
+    <button class="btn btn-primary" onclick="createThread(buildDefaultThreadName(),'Self-initiated');renderThreads();toast('Thread created','success')">
+      + New thread
+    </button>
+  </div>
+
+  <div class="filter-bar" role="search" aria-label="Filter threads">
+    <div class="form-group">
+      <label for="threads-filter-status">Status</label>
+      <select id="threads-filter-status" onchange="renderThreads()">
+        <option value="">Active + waiting</option>
+        <option value="active">Active only</option>
+        <option value="awaiting-follow-up">Awaiting follow-up</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <div class="form-group" style="align-self:flex-end">
+      <div id="threads-count" class="flex gap-6"></div>
+    </div>
+  </div>
+
+  <div id="threads-list" role="list" aria-label="Workflow threads"></div>
+</section>
+
+<!-- ══ QUICK CAPTURE ═══════════════════════════════════════════ -->
+<section class="page-section" id="section-quick-capture" aria-labelledby="qc-h2">
+  <div class="page-header">
+    <h2 id="qc-h2">Quick Capture</h2>
+    <p>Log any activity fast. Link it to a referral or thread. Tag it. Save it.</p>
+  </div>
+
+  <div id="qc-referral-banner" style="display:none" aria-live="polite"></div>
+  <div id="qc-thread-banner"   style="display:none" aria-live="polite"></div>
+
+  <div class="grid-2">
+    <!-- Left: form -->
+    <div>
+      <div class="card">
+        <div class="card-title">What happened?</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="qc-date">Date <span class="req" aria-hidden="true">*</span></label>
+            <input type="date" id="qc-date" required aria-required="true">
+          </div>
+          <div class="form-group">
+            <label for="qc-subtype">Activity type</label>
+            <select id="qc-subtype">
+              <option value="">— select type —</option>
+              <option>1:1 Coaching</option>
+              <option>Workshop / Team Session</option>
+              <option>Teach-Meet</option>
+              <option>Learning Walk</option>
+              <option>Digital Health Check</option>
+              <option>Meeting</option>
+              <option>Resource / Output created</option>
+              <option>External Event / CPD</option>
+              <option>Own CPD / Professional Dev</option>
+              <option>Follow-up / Check-in</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="qc-title">Title / summary <span class="req" aria-hidden="true">*</span></label>
+          <div class="input-with-mic">
+            <input type="text" id="qc-title" required aria-required="true"
+              placeholder="e.g. Accessibility coaching with EGL team">
+            <button class="mic-btn" onclick="startDictation('qc-title')" aria-label="Dictate title">🎤</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="qc-notes">Notes / detail</label>
+          <div class="input-with-mic" style="align-items:flex-start">
+            <textarea id="qc-notes" rows="5"
+              placeholder="What happened, who was involved, outcomes, quotes…"></textarea>
+            <button class="mic-btn" onclick="startDictation('qc-notes')" aria-label="Dictate notes"
+              style="margin-top:2px">🎤</button>
+          </div>
+        </div>
+
+        <!-- Structured fields toggle -->
+        <button class="btn btn-secondary btn-sm mb-8" onclick="toggleQCAdvanced()"
+          id="qc-advanced-btn" aria-expanded="false">+ Add structured fields</button>
+
+        <div class="qc-advanced" id="qc-advanced" aria-hidden="true"
+          style="display:none;margin-top:.5rem;padding-top:.75rem;border-top:1px solid var(--border)">
+          <div class="form-group">
+            <label for="qc-summary">Structured summary</label>
+            <div class="input-with-mic" style="align-items:flex-start">
+              <textarea id="qc-summary" rows="2"
+                placeholder="Clear one-paragraph summary for evidence and governance"></textarea>
+              <button class="mic-btn" onclick="startDictation('qc-summary')" aria-label="Dictate" style="margin-top:2px">🎤</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="qc-strengths">Strengths</label>
+              <div class="input-with-mic" style="align-items:flex-start">
+                <textarea id="qc-strengths" rows="2" placeholder="What went well…"></textarea>
+                <button class="mic-btn" onclick="startDictation('qc-strengths')" aria-label="Dictate" style="margin-top:2px">🎤</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="qc-afis">Areas for Improvement</label>
+              <div class="input-with-mic" style="align-items:flex-start">
+                <textarea id="qc-afis" rows="2" placeholder="What needs to improve…"></textarea>
+                <button class="mic-btn" onclick="startDictation('qc-afis')" aria-label="Dictate" style="margin-top:2px">🎤</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="qc-actions">Priority actions / next steps</label>
+            <div class="input-with-mic" style="align-items:flex-start">
+              <textarea id="qc-actions" rows="2" placeholder="What happens next…"></textarea>
+              <button class="mic-btn" onclick="startDictation('qc-actions')" aria-label="Dictate" style="margin-top:2px">🎤</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Area and phase -->
+        <div class="form-row mt-12">
+          <div class="form-group">
+            <label for="qc-area">Curriculum area</label>
+            <select id="qc-area" onchange="toggleHoAOption()">
+              <option value="">— not area-specific —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="qc-phase">Phase</label>
+            <select id="qc-phase">
+              <option value="phase1">Phase 1 — Finish &amp; Formalise</option>
+              <option value="phase2">Phase 2 — Build Infrastructure</option>
+              <option value="phase3">Phase 3 — Scale &amp; Sustain</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- HoA tracker toggle -->
+        <div class="toggle-row" id="hoa-toggle-row" style="display:none">
+          <span class="toggle-label">📌 Update HoA Tracker for this area</span>
+          <label class="toggle-switch" aria-label="Update HoA Tracker">
+            <input type="checkbox" id="qc-update-hoa" onchange="toggleHoAPreview()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div id="qc-hoa-preview" style="display:none;margin-top:.5rem;padding:.6rem .75rem;background:var(--sky-l);border-radius:var(--radius);font-size:.78rem;color:var(--navy-700)">
+          ✓ Structured fields will be appended to this area's HoA Tracker record.
+        </div>
+
+        <!-- Thread linking -->
+        <div class="mt-12">
+          <label class="tag-checkbox-row" style="margin-bottom:.4rem">
+            <input type="checkbox" id="qc-new-thread"
+              onchange="document.getElementById('qc-thread-row').style.display=this.checked?'block':'none'">
+            Start a new workflow thread for this entry
+          </label>
+          <div id="qc-thread-row" style="display:none">
+            <div class="form-group">
+              <label for="qc-thread-name">Thread name <span class="hint">(auto-suggested)</span></label>
+              <input type="text" id="qc-thread-name" placeholder="Thread name…">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: tags + save -->
+    <div>
+      <div class="card mb-12">
+        <div class="card-title flex-between">
+          Tags
+          <button class="btn btn-sm btn-secondary" id="qc-tag-btn" onclick="openQCTagPicker()">
+            🏷 Tags
+          </button>
+        </div>
+        <div id="qc-tag-chips" class="flex flex-wrap gap-4" aria-live="polite"></div>
+        <p class="text-xs text-muted mt-8">
+          Click the Tags button to open the full three-tier tag picker — themes, Ofsted frame, DTPF domains, KPIs, and accountabilities.
+        </p>
+      </div>
+
+      <div class="flex gap-8">
+        <button class="btn btn-primary" onclick="saveQuickCapture()" style="flex:1">✦ Save entry</button>
+        <button class="btn btn-secondary" onclick="clearQuickCapture()">Clear</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LRA ═════════════════════════════════════════════════════ -->
+<section class="page-section" id="section-lra" aria-labelledby="lra-h2">
+  <div class="page-header flex-between">
+    <div>
+      <h2 id="lra-h2">Learning Review Activity (LRA)</h2>
+      <p>Mirrors the Weston Hyper College Platform form. Fill in here first — copy to Hyper when ready.</p>
+    </div>
+    <button class="btn btn-secondary" onclick="copyLRAToClipboard()" id="lra-copy-btn">📋 Copy for Hyper</button>
+  </div>
+  <!-- LRA form built by lra.js -->
+  <div id="lra-form-container"></div>
+</section>
+
+<!-- ══ DEV OBS ══════════════════════════════════════════════════ -->
+<section class="page-section" id="section-devobs" aria-labelledby="devobs-h2">
+  <div class="page-header flex-between">
+    <div>
+      <h2 id="devobs-h2">Developmental Observation</h2>
+      <p>Mirrors the Weston Hyper College Platform form. Fill in here first — copy to Hyper when ready.</p>
+    </div>
+    <button class="btn btn-secondary" onclick="copyDevObsToClipboard()" id="devobs-copy-btn">📋 Copy for Hyper</button>
+  </div>
+  <div id="devobs-form-container"></div>
+</section>
+
+<!-- ══ EVIDENCE LOG ═════════════════════════════════════════════ -->
+<section class="page-section" id="section-evidence-log" aria-labelledby="evlog-h2">
+  <div class="page-header flex-between">
+    <div>
+      <h2 id="evlog-h2">Evidence Log</h2>
+      <p>All captured entries — filterable by area, type, thread, date range, and tags.</p>
+    </div>
+    <button class="btn btn-primary" onclick="navigateTo('quick-capture')">+ New entry</button>
+  </div>
+
+  <div class="filter-bar" role="search" aria-label="Filter evidence entries">
+    <div class="form-group">
+      <label for="filter-search">Search</label>
+      <input type="text" id="filter-search" placeholder="Keyword…" oninput="renderEvidenceLog()">
+    </div>
+    <div class="form-group">
+      <label for="filter-area">Area</label>
+      <select id="filter-area" onchange="renderEvidenceLog()">
+        <option value="">All areas</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filter-type">Type</label>
+      <select id="filter-type" onchange="renderEvidenceLog()">
+        <option value="">All types</option>
+        <option>1:1 Coaching</option>
+        <option>Workshop / Team Session</option>
+        <option>Teach-Meet</option>
+        <option>Learning Walk</option>
+        <option>Digital Health Check</option>
+        <option>Meeting</option>
+        <option>LRA</option>
+        <option>Developmental Observation</option>
+        <option>Resource / Output created</option>
+        <option>External Event / CPD</option>
+        <option>Own CPD / Professional Dev</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filter-thread">Thread</label>
+      <select id="filter-thread" onchange="renderEvidenceLog()">
+        <option value="">All / no thread</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filter-from">From</label>
+      <input type="date" id="filter-from" onchange="renderEvidenceLog()">
+    </div>
+    <div class="form-group">
+      <label for="filter-to">To</label>
+      <input type="date" id="filter-to" onchange="renderEvidenceLog()">
+    </div>
+    <div class="form-group" style="align-self:flex-end">
+      <button class="btn btn-secondary" onclick="clearEvidenceFilters()">Clear</button>
+    </div>
+  </div>
+
+  <div class="flex-between mb-8">
+    <div class="text-sm text-muted" id="evidence-log-count"></div>
+    <button class="btn btn-sm btn-secondary" onclick="exportEvidenceCSV()">Export CSV</button>
+  </div>
+
+  <div class="card" style="padding:0;overflow-x:auto">
+    <div id="evidence-log-wrapper"></div>
+  </div>
+</section>
+
+<!-- ══ CURRICULUM AREAS ═════════════════════════════════════════ -->
+<section class="page-section" id="section-curriculum-areas" aria-labelledby="areas-h2">
+  <div class="page-header flex-between">
+    <div><h2 id="areas-h2">Curriculum Areas</h2><p>34 areas pre-loaded. Digital skills, ratings, notes.</p></div>
+    <button class="btn btn-secondary btn-sm" onclick="openAddAreaModal()">+ Add area</button>
+  </div>
+  <div class="filter-bar">
+    <div class="form-group">
+      <label for="area-search" class="sr-only">Search areas</label>
+      <input type="text" id="area-search" placeholder="🔍 Search by code or name…" oninput="renderAreas()">
+    </div>
+  </div>
+  <div id="areas-container"></div>
+</section>
+
+<!-- ══ HOA TRACKER ══════════════════════════════════════════════ -->
+<section class="page-section" id="section-hoa-tracker" aria-labelledby="hoa-h2">
+  <div class="page-header flex-between">
+    <div><h2 id="hoa-h2">HoA Tracker</h2><p>Head of Area Digital Tracker — Meeting 1 · 2025–27</p></div>
+    <button class="btn btn-secondary btn-sm" onclick="exportHoACSV()">Export CSV</button>
+  </div>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true"  onclick="switchTab(this,'hoa-tab-','overview')">RAG Overview</button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab(this,'hoa-tab-','priority')">Priority</button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab(this,'hoa-tab-','detail')">Area Detail</button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab(this,'hoa-tab-','history')">History</button>
+  </div>
+  <div class="tab-panel active" id="hoa-tab-overview">
+    <div class="filter-bar" style="margin-bottom:1rem">
+      <div class="form-group"><label for="hoa-filter-rag">RAG</label>
+        <select id="hoa-filter-rag" onchange="renderHoAOverview()">
+          <option value="">All</option>
+          <option value="1">1 — Confident</option><option value="2">2 — Developing</option>
+          <option value="3">3 — Acceptable</option><option value="4">4 — Concern</option>
+          <option value="5">5 — Urgent</option><option value="tbc">TBC</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="hoa-filter-met">Meeting</label>
+        <select id="hoa-filter-met" onchange="renderHoAOverview()">
+          <option value="">All</option><option value="Y">Met</option><option value="N">Not yet</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="hoa-filter-sort">Sort</label>
+        <select id="hoa-filter-sort" onchange="renderHoAOverview()">
+          <option value="urgency">Urgency</option>
+          <option value="alpha">Alphabetical</option>
+        </select>
+      </div>
+      <div class="form-group" style="align-self:flex-end">
+        <button class="btn btn-secondary" onclick="resetHoAFilters()">Clear</button>
+      </div>
+    </div>
+    <div id="hoa-overview-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem"></div>
+  </div>
+  <div class="tab-panel" id="hoa-tab-priority">
+    <div id="hoa-priority-summary" class="flex gap-8 flex-wrap mb-16"></div>
+    <div class="card"><div class="card-title">RAG 4–5 — immediate coaching priority</div><div id="hoa-priority-table"></div></div>
+  </div>
+  <div class="tab-panel" id="hoa-tab-detail">
+    <div class="flex gap-8 mb-16" style="align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group" style="margin-bottom:0;min-width:260px">
+        <label for="hoa-detail-select">Select area</label>
+        <select id="hoa-detail-select" onchange="renderHoADetail()"><option value="">— choose —</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="saveHoADetail()">Save changes</button>
+      <button class="btn btn-secondary btn-sm" onclick="takeHoASnapshot()">📸 Snapshot</button>
+    </div>
+    <div id="hoa-detail-content"><div class="empty-state"><p>Select an area above.</p></div></div>
+  </div>
+  <div class="tab-panel" id="hoa-tab-history">
+    <div class="form-group mb-16" style="max-width:300px">
+      <label for="hoa-history-select">Select area</label>
+      <select id="hoa-history-select" onchange="renderHoAHistory()"><option value="">— choose —</option></select>
+    </div>
+    <div id="hoa-history-content"><div class="empty-state"><p>Select an area to view snapshot history.</p></div></div>
+  </div>
+</section>
+
+<!-- ══ STAFF DEVELOPMENT ════════════════════════════════════════ -->
+<section class="page-section" id="section-staff-dev" aria-labelledby="staff-h2">
+  <div class="page-header flex-between">
+    <div><h2 id="staff-h2">Staff Development</h2><p>Individual digital skills progression — named or anonymous.</p></div>
+    <button class="btn btn-primary" onclick="openAddStaffRecordModal()">+ Add record</button>
+  </div>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" role="tab" onclick="switchTab(this,'staff-tab-','records')">All records</button>
+    <button class="tab-btn" role="tab" onclick="switchTab(this,'staff-tab-','actions')">Action plans</button>
+    <button class="tab-btn" role="tab" onclick="switchTab(this,'staff-tab-','impact')">Impact log</button>
+  </div>
+  <div class="tab-panel active" id="staff-tab-records"><div class="card"><div id="staff-records-list"></div></div></div>
+  <div class="tab-panel" id="staff-tab-actions"><div class="card"><div id="staff-actions-list"></div></div></div>
+  <div class="tab-panel" id="staff-tab-impact"><div class="card"><div id="staff-impact-list"></div></div></div>
+</section>
+
+<!-- ══ OWN CPD + NETWORKING ════════════════════════════════════ -->
+<section class="page-section" id="section-own-cpd" aria-labelledby="cpd-h2">
+  <div class="page-header">
+    <h2 id="cpd-h2">CPD &amp; External Networking</h2>
+    <p>Your own professional development — courses, reading, events, networks.</p>
+  </div>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" role="tab" onclick="switchTab(this,'cpd-tab-','own')">Own CPD</button>
+    <button class="tab-btn" role="tab" onclick="switchTab(this,'cpd-tab-','external')">External events</button>
+  </div>
+  <div class="tab-panel active" id="cpd-tab-own">
+    <div class="flex-end mb-12">
+      <button class="btn btn-primary" onclick="openAddOwnCPDModal()">+ Log CPD</button>
+    </div>
+    <div id="own-cpd-list"></div>
+  </div>
+  <div class="tab-panel" id="cpd-tab-external">
+    <div class="flex-end mb-12">
+      <button class="btn btn-primary" onclick="openAddExternalModal()">+ Log event</button>
+    </div>
+    <div id="external-cpd-list"></div>
+  </div>
+</section>
+
+<!-- ══ DIGITAL LEADS DASHBOARD ══════════════════════════════════ -->
+<section class="page-section" id="section-dl-dashboard" aria-labelledby="dl-h2">
+  <div class="page-header">
+    <h2 id="dl-h2">Digital Leads Activity Dashboard</h2>
+    <p>Select the Digital Leads Activity Log.xlsx from your OneDrive to load live data.</p>
+  </div>
+  <div id="dl-dashboard-container">
+    <!-- DL dashboard loaded by dl-embed.js -->
+    <div class="notice info">
+      <h3>Digital Leads Dashboard</h3>
+      <p>This tab embeds the Digital Leads Activity Dashboard. Use the button below to select your Excel file from OneDrive — it reads the data directly in your browser, nothing is uploaded.</p>
+    </div>
+    <button class="btn btn-primary mt-12" id="dl-load-btn" onclick="dlOpenFilePicker()">
+      📂 Select Digital Leads Activity Log.xlsx
+    </button>
+    <div id="dl-dashboard-content" style="margin-top:1rem"></div>
+  </div>
+</section>
+
+<!-- ══ REPORT BUILDER ═══════════════════════════════════════════ -->
+<section class="page-section" id="section-report-builder" aria-labelledby="report-h2">
+  <div class="page-header">
+    <h2 id="report-h2">Report Builder</h2>
+    <p>Filter evidence, then generate a structured draft using AI — or export as formatted text.</p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Report parameters</div>
+      <div class="form-group">
+        <label for="report-type">Report type</label>
+        <select id="report-type">
+          <option value="3month">3-Month Pilot Review (October 2026)</option>
+          <option value="9month">9-Month Pilot Review (April 2027)</option>
+          <option value="18month">18-Month Pilot Review (July 2027)</option>
+          <option value="line-manager">Line Manager Update</option>
+          <option value="kpi-summary">KPI Summary</option>
+          <option value="cqrp">CQRP Contribution</option>
+          <option value="sar">SAR Input</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label for="report-from">From</label><input type="date" id="report-from"></div>
+        <div class="form-group"><label for="report-to">To</label><input type="date" id="report-to"></div>
+      </div>
+      <div class="form-group">
+        <label for="report-accountability">Accountability focus</label>
+        <select id="report-accountability"><option value="">All</option></select>
+      </div>
+      <div class="form-group">
+        <label for="report-kpi">KPI focus</label>
+        <select id="report-kpi"><option value="">All</option></select>
+      </div>
+      <div class="form-group">
+        <label for="report-api-key">
+          Anthropic API key
+          <span class="hint">(not saved — only used for AI generation)</span>
+        </label>
+        <input type="password" id="report-api-key" placeholder="sk-ant-…"
+          autocomplete="off" aria-describedby="api-key-hint">
+        <div id="api-key-hint" class="text-xs text-muted mt-4">
+          Your key is never stored. It is sent directly to api.anthropic.com only when you click Generate.
+        </div>
+      </div>
+      <div class="text-sm text-muted mb-12" id="report-entries-count" aria-live="polite"></div>
+      <button class="btn btn-primary" onclick="generateReport()" style="width:100%">⬡ Generate report draft</button>
+      <button class="btn btn-secondary mt-8" onclick="previewReportEntries()" style="width:100%">Preview matched entries</button>
+      <button class="btn btn-secondary mt-8" onclick="exportEvidenceDocx()" style="width:100%">📄 Export as Word (.docx)</button>
+    </div>
+    <div>
+      <div class="card-title mb-8">Report output</div>
+      <div class="card" id="report-output" aria-live="polite"
+        style="min-height:200px;font-size:.85rem;line-height:1.7;white-space:pre-wrap;font-family:var(--font-body)">
+        Select parameters and click Generate, or Preview to see matched entries.
+      </div>
+      <div class="flex gap-8 mt-12">
+        <button class="btn btn-secondary" onclick="copyReport()">Copy</button>
+        <button class="btn btn-secondary" onclick="downloadReportTxt()">Download .txt</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SETTINGS ════════════════════════════════════════════════ -->
+<section class="page-section" id="section-settings" aria-labelledby="settings-h2">
+  <div class="page-header">
+    <h2 id="settings-h2">Settings &amp; Tag Management</h2>
+    <p>Manage tags, Hyper themes, rating fields, and data.</p>
+  </div>
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" role="tab" onclick="switchTab(this,'settings-panel-','tags')">Tags &amp; Themes</button>
+    <button class="tab-btn" role="tab" onclick="switchTab(this,'settings-panel-','ratings')">Rating fields</button>
+    <button class="tab-btn" role="tab" onclick="switchTab(this,'settings-panel-','data')">Data &amp; JSON</button>
+  </div>
+  <div class="tab-panel active" id="settings-panel-tags">
+    <div id="tag-management-content"></div>
+  </div>
+  <div class="tab-panel" id="settings-panel-ratings">
+    <div class="card">
+      <div class="card-title">Rating fields</div>
+      <p class="text-sm text-muted mb-12">Fields appear in each Curriculum Area ratings tab.</p>
+      <div id="rating-fields-list"></div>
+      <div class="divider"></div>
+      <div class="flex gap-8">
+        <input type="text" id="new-rating-field" placeholder="New rating field name…" style="max-width:280px"
+          aria-label="New rating field name">
+        <button class="btn btn-primary" onclick="addRatingField()">+ Add field</button>
+      </div>
+    </div>
+  </div>
+  <div class="tab-panel" id="settings-panel-data">
+    <div id="settings-data-content"></div>
+  </div>
+</section>
+
+</main>
+</div><!-- /app-body -->
+
+<!-- SCRIPTS — load order matters -->
+<script src="js/db.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/tags.js"></script>
+<script src="js/threads.js"></script>
+<script src="js/activities.js"></script>
+<script src="js/lra.js"></script>
+<script src="js/devobs.js"></script>
+<script src="js/hoa-tracker.js"></script>
+<script src="js/areas.js"></script>
+<script src="js/staff-dev.js"></script>
+<script src="js/report-builder.js"></script>
+<script src="js/dl-embed.js"></script>
+<script src="js/export.js"></script>
+
+</body>
+</html>
