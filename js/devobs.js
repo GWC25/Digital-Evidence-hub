@@ -230,6 +230,16 @@ function initDevObs(ctx) {
       </div>
     </div>
 
+    <!-- EVIDENCE LINKS -->
+    <div class="card mb-12">
+      <div class="card-title flex-between">
+        Evidence links &amp; resources
+        <button class="btn btn-sm btn-ghost" onclick="addDevObsEvidenceLink()">+ Add link</button>
+      </div>
+      <div id="devobs-evidence-links-list"></div>
+      <p class="text-xs text-muted mt-6">Teams recordings, SharePoint files, screenshots, resources created…</p>
+    </div>
+
     <!-- TAGS + THREAD -->
     <div class="card mb-16">
       <div class="card-title flex-between">
@@ -331,6 +341,37 @@ function updateDevObsTagDisplay() {
   if (chips) chips.innerHTML = renderTagChips(_devobsTags, { showAll: true });
 }
 
+/* ── EVIDENCE LINKS ───────────────────────────────────────────── */
+
+let _devobsLinkCount = 0;
+
+function addDevObsEvidenceLink() {
+  const list = document.getElementById('devobs-evidence-links-list');
+  if (!list) return;
+  _devobsLinkCount++;
+  const n   = _devobsLinkCount;
+  const div = document.createElement('div');
+  div.id    = 'devobs-link-row-' + n;
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:.5rem;margin-bottom:.5rem;align-items:center';
+  div.innerHTML = `
+    <input type="url" id="devobs-link-url-${n}" placeholder="https://…" aria-label="Link URL ${n}">
+    <input type="text" id="devobs-link-label-${n}" placeholder="Description" aria-label="Description ${n}">
+    <button class="btn btn-sm btn-danger" onclick="document.getElementById('devobs-link-row-${n}').remove()"
+      aria-label="Remove link">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+function getDevObsEvidenceLinks() {
+  const links = [];
+  for (let i = 1; i <= _devobsLinkCount; i++) {
+    const url   = document.getElementById('devobs-link-url-'+i)?.value?.trim();
+    const label = document.getElementById('devobs-link-label-'+i)?.value?.trim();
+    if (url) links.push({ url, label: label || url });
+  }
+  return links;
+}
+
 /* ── SAVE ─────────────────────────────────────────────────────── */
 
 function saveDevObs() {
@@ -399,6 +440,7 @@ function saveDevObs() {
     actions:   document.getElementById('devobs-strategies')?.value?.trim()  || '',
     // Meta
     tags:        _devobsTags,
+    evidenceLinks: getDevObsEvidenceLinks(),
     referralId:  _devobsReferralId || '',
     threadId,
     requestedBy: _devobsReferralId ? (DB.referrals.find(r=>r.id===_devobsReferralId)?.requestedBy||'') : '',
