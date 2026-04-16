@@ -67,8 +67,11 @@ function renderHoAOverview() {
       aria-label="${esc(a.code)} — ${esc(a.dept)}, RAG ${a.rag||'TBC'}">
       <div class="flex-between mb-6">
         <span class="badge badge-navy" style="font-family:var(--font-mono);font-size:.75rem">${esc(a.code)}</span>
-        <div class="flex gap-4">
-          ${hoaRagBadge(a.rag)}
+        <div class="flex gap-4" onclick="event.stopPropagation()">
+          <button class="badge ${a.rag ? ['','badge-green','badge-teal','badge-amber','badge-red','badge-red'][a.rag]||'' : ''}"
+            style="cursor:pointer;border:none;font-family:var(--font-body)"
+            onclick="filterHoAByRag('${a.rag||'tbc'}')"
+            aria-label="Filter to RAG ${a.rag||'TBC'} areas">${a.rag ? hoaRagLabel(a.rag) + ' (' + a.rag + ')' : 'TBC'}</button>
           ${hoaMetBadge(a.metM1)}
         </div>
       </div>
@@ -79,6 +82,27 @@ function renderHoAOverview() {
       ${a.nextAction ? `<div class="text-xs mt-6" style="color:var(--amber-700)">▶ ${esc(a.nextAction.substring(0,60))}${a.nextAction.length>60?'…':''}</div>` : ''}
     </article>`;
   }).join('');
+}
+
+function filterHoAByRag(val) {
+  // Switch to RAG Overview tab and apply filter
+  const ragSel = document.getElementById('hoa-filter-rag');
+  if (ragSel) ragSel.value = val;
+  // Switch to overview tab
+  document.querySelectorAll('[id^="hoa-tab-"]').forEach(p => p.classList.remove('active'));
+  const ov = document.getElementById('hoa-tab-overview');
+  if (ov) ov.classList.add('active');
+  // Update tab buttons
+  const bar = document.querySelector('#section-hoa-tracker .tab-bar');
+  if (bar) {
+    bar.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === 0);
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    });
+  }
+  renderHoAOverview();
+  // Scroll to overview
+  document.getElementById('hoa-overview-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function resetHoAFilters() {
@@ -101,13 +125,16 @@ function renderHoAPrioritySummary() {
   const tbc = DB.hoaTracker.filter(a => !a.rag).length;
 
   summary.innerHTML = [
-    { label:'Confident (1)',  n:counts[1], cls:'badge-green' },
-    { label:'Developing (2)', n:counts[2], cls:'badge-teal'  },
-    { label:'Acceptable (3)', n:counts[3], cls:'badge-amber' },
-    { label:'Concern (4)',    n:counts[4], cls:'badge-red'   },
-    { label:'Urgent (5)',     n:counts[5], cls:'badge-red'   },
-    { label:'TBC',            n:tbc,        cls:''             },
-  ].map(r => `<span class="badge ${r.cls}">${r.label}: ${r.n}</span>`).join('');
+    { label:'Confident (1)',  n:counts[1], cls:'badge-green', val:'1' },
+    { label:'Developing (2)', n:counts[2], cls:'badge-teal',  val:'2' },
+    { label:'Acceptable (3)', n:counts[3], cls:'badge-amber', val:'3' },
+    { label:'Concern (4)',    n:counts[4], cls:'badge-red',   val:'4' },
+    { label:'Urgent (5)',     n:counts[5], cls:'badge-red',   val:'5' },
+    { label:'TBC',            n:tbc,        cls:'',            val:'tbc' },
+  ].map(r => `<button class="badge ${r.cls}"
+    style="cursor:pointer;border:none;font-family:var(--font-body)"
+    onclick="filterHoAByRag('${r.val}')"
+    aria-label="Filter to ${r.label} areas">${r.label}: ${r.n}</button>`).join('');
 
   const priority = DB.hoaTracker.filter(a => a.rag >= 4)
     .sort((a,b) => b.rag - a.rag || a.code.localeCompare(b.code));
