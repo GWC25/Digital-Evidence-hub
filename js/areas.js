@@ -77,7 +77,7 @@ function openAreaDetail(code) {
 
   const ratingFields = DB.ratingFields.filter(f => f.enabled);
 
-  openModal(`${esc(a.code)} — ${esc(a.name)}`, `
+  openModal(`${esc(a.code)} — ${a.name}`, `
     <div class="tab-bar" role="tablist">
       <button class="tab-btn active" role="tab" onclick="switchTab(this,'ad-panel-','skills')">Skills &amp; Tools</button>
       <button class="tab-btn" role="tab" onclick="switchTab(this,'ad-panel-','ratings')">Ratings</button>
@@ -118,7 +118,32 @@ function openAreaDetail(code) {
         </div>
       `).join('')}
       ${hoa ? `<div class="divider"></div>
-        <div class="text-sm text-muted">HoA RAG: ${hoaRagBadge(hoa.rag)} &nbsp; Digital Lead: ${esc(hoa.digitalLead||'None yet')}</div>` : ''}
+        <div class="flex-between" style="align-items:center;gap:.75rem">
+          <div>
+            <div class="text-xs text-muted mb-4">HoA RAG</div>
+            ${hoaRagBadge(hoa.rag)}
+          </div>
+          <div style="flex:1">
+            <label for="ad-digital-lead" style="font-size:.75rem;font-weight:600;color:var(--text-900);margin-bottom:.3rem;display:block">
+              Digital Lead
+              <span class="hint">(syncs with HoA Tracker)</span>
+            </label>
+            <input type="text" id="ad-digital-lead" value="${esc(hoa.digitalLead||'')}"
+              placeholder="Digital Lead name(s)" style="font-size:.82rem">
+          </div>
+          <div style="flex:1">
+            <label for="ad-future-lead" style="font-size:.75rem;font-weight:600;color:var(--text-900);margin-bottom:.3rem;display:block">
+              Future Digital Lead
+            </label>
+            <input type="text" id="ad-future-lead" value="${esc(hoa.futureDigitalLead||'')}"
+              placeholder="Potential future lead" style="font-size:.82rem">
+          </div>
+          <button class="btn btn-sm btn-secondary" style="flex-shrink:0;align-self:flex-end"
+            onclick="closeModal();navigateTo('hoa-tracker');setTimeout(()=>{const sel=document.getElementById('hoa-detail-select');if(sel){sel.value='${code}';renderHoADetail();}},100)"
+            aria-label="Open full HoA Tracker record for ${esc(code)}">
+            ✏ HoA Detail
+          </button>
+        </div>` : ''}
     </div>
 
     <!-- NOTES TAB -->
@@ -147,6 +172,14 @@ function openAreaDetail(code) {
         const v = document.getElementById('ad-rat-'+f.id)?.value;
         if (v) a.ratings[f.id] = v;
       });
+      // Sync Digital Lead edits back to HoA Tracker
+      const hoaRec = DB.hoaTracker.find(x => x.code === code);
+      if (hoaRec) {
+        const dlVal = document.getElementById('ad-digital-lead')?.value?.trim();
+        const flVal = document.getElementById('ad-future-lead')?.value?.trim();
+        if (dlVal !== undefined) hoaRec.digitalLead = dlVal;
+        if (flVal !== undefined) hoaRec.futureDigitalLead = flVal;
+      }
       closeModal();
       renderAreas();
       toast(`${code} saved`, 'success');
