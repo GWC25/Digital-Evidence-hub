@@ -126,6 +126,10 @@
       <span class="nav-icon" aria-hidden="true">⬡</span>
       Report Builder
     </button>
+    <button class="nav-item" onclick="navigateTo('resources')">
+      <span class="nav-icon" aria-hidden="true">🔗</span>
+      Resource Library
+    </button>
 
     <span class="nav-group-label">System</span>
     <button class="nav-item" onclick="navigateTo('settings')">
@@ -763,6 +767,78 @@
   </div>
 </section>
 
+<!-- ══ RESOURCE LIBRARY ═════════════════════════════════════════ -->
+<section class="page-section" id="section-resources" aria-labelledby="res-h2">
+  <div class="page-header flex-between">
+    <div>
+      <h2 id="res-h2">Resource Library</h2>
+      <p>Reusable resources to share and revisit — video tutorials, webinars, PDFs, SharePoint guides, links.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddResourceModal()">+ Add resource</button>
+  </div>
+
+  <div class="filter-bar" role="search" aria-label="Filter resources">
+    <div class="form-group">
+      <label for="res-filter-search">Search</label>
+      <input type="text" id="res-filter-search" placeholder="Title or keyword…" oninput="renderResourceLibrary()">
+    </div>
+    <div class="form-group">
+      <label for="res-filter-cat">Category</label>
+      <select id="res-filter-cat" onchange="renderResourceLibrary()">
+        <option value="">All categories</option>
+        <option>Video tutorial</option>
+        <option>Webinar / recording</option>
+        <option>PDF / document</option>
+        <option>SharePoint resource</option>
+        <option>External tool / site</option>
+        <option>Template</option>
+        <option>Case study</option>
+        <option>Policy / framework</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="res-filter-area">Area</label>
+      <select id="res-filter-area" onchange="renderResourceLibrary()">
+        <option value="">All areas</option>
+      </select>
+    </div>
+    <div class="form-group" style="align-self:flex-end">
+      <button class="btn btn-secondary" onclick="clearResourceFilters()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Quick-add bar for fast link capture -->
+  <div class="card mb-16" style="background:var(--bg-subtle)">
+    <div class="card-title mb-8">Quick-add a link</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:.6rem;align-items:flex-end">
+      <div class="form-group" style="margin-bottom:0">
+        <label for="res-quick-url">URL</label>
+        <input type="url" id="res-quick-url" placeholder="https://…">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label for="res-quick-title">Title</label>
+        <input type="text" id="res-quick-title" placeholder="Short name">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label for="res-quick-cat">Category</label>
+        <select id="res-quick-cat">
+          <option>Video tutorial</option>
+          <option>Webinar / recording</option>
+          <option>PDF / document</option>
+          <option>SharePoint resource</option>
+          <option>External tool / site</option>
+          <option>Template</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="quickAddResource()" style="align-self:flex-end;margin-bottom:0">+ Add</button>
+    </div>
+  </div>
+
+  <div id="resource-library-grid" role="list" aria-label="Resource library"></div>
+</section>
+
 <!-- ══ SETTINGS ════════════════════════════════════════════════ -->
 <section class="page-section" id="section-settings" aria-labelledby="settings-h2">
   <div class="page-header">
@@ -812,6 +888,7 @@
 <script src="js/report-builder.js"></script>
 <script src="js/dl-embed.js"></script>
 <script src="js/export.js"></script>
+<script src="js/resources.js"></script>
 
 </body>
 </html>
