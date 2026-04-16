@@ -297,12 +297,11 @@ const DB = {
   /* ── REQUESTED BY — hybrid list ─────────────────────────────── */
   // Pre-populated, user can add more in Settings
   requestedByOptions: [
-    'Neil Davies (AP QI)',
+    'Neil Davies (AP Quality)',
     'Ben Manning (VP Quality)',
-    'Emily Green (TLA Manager)',
+    'Emily Green (TLAM)',
     'Marisha West (TLA Coach)',
     'Megan Brookes (TLAM)',
-    'Dan Pratlett (TLAM)',
     'Steve Brawley (TLAM)',
     'Liz Burkley (SEND/AT)',
     'Lois Knight (SEND/AT)',
