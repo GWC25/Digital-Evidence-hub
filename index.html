@@ -3,934 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Digital Evidence Hub · Weston College Group</title>
-<meta name="description" content="Digital Pedagogy Coach evidence and tool suite — Weston College Group. Evidence hub, Digital Leads dashboard, training plan, and digital pedagogy toolkit.">
+<title>Digital Pedagogy Coach · Weston College</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <style>
-/* ── TOKENS (all contrast-verified) ── */
-:root {
-  --navy-950: #0c1f35;
-  --navy-800: #0f2d4a;
-  --navy-700: #1d4e89;
-  --teal-700: #0f766e;
-  --teal-600: #0d9488;
-  --teal-l:   #ccfbf1;
-  --sky-l:    #deeaf1;
-  --surface:  #ffffff;
-  --bg:       #f5f4f0;
-  --bg-subtle:#ede9e4;
-  --border:   #d6d3cb;
-  --text-900: #1a1916;
-  --text-600: #4b5563;
-  --off-white:#e2ddd8;
-  --muted-blue:#9faab8;
-  --font-display:'Fraunces', Georgia, serif;
-  --font-body:'DM Sans', system-ui, sans-serif;
-  --font-mono:'DM Mono', 'Courier New', monospace;
-  --radius: 8px;
-  --radius-lg: 14px;
-  --shadow: 0 4px 20px rgba(0,0,0,.09);
-  --shadow-lg: 0 16px 48px rgba(0,0,0,.14);
-}
-
-/* ── RESET ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: var(--font-body);
-  background: var(--navy-950);
-  color: var(--off-white);
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-
-/* ── SKIP LINK — WCAG 2.4.1 ── */
-.skip-link {
-  position: absolute;
-  top: -100%;
-  left: 0;
-  background: var(--navy-700);
-  color: #fff;
-  padding: 10px 18px;
-  font-weight: 600;
-  font-size: .875rem;
-  text-decoration: none;
-  border-radius: 0 0 var(--radius) 0;
-  z-index: 10000;
-  transition: top .15s;
-}
-.skip-link:focus { top: 0; outline: 3px solid #60a5fa; outline-offset: 2px; }
-
-/* ── HEADER ── */
-header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  padding: .85rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(12,31,53,.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.header-brand {
-  display: flex;
-  align-items: center;
-  gap: .65rem;
-  text-decoration: none;
-}
-.header-logo {
-  width: 32px; height: 32px;
-  background: var(--navy-700);
-  border-radius: 6px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono);
-  font-size: .65rem; font-weight: 500;
-  color: #fff;
-  flex-shrink: 0;
-}
-.header-wordmark {
-  font-family: var(--font-display);
-  font-size: .9rem;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-}
-.header-college {
-  font-size: .62rem;
-  color: var(--muted-blue);
-  font-family: var(--font-mono);
-  white-space: nowrap;
-}
-.header-nav { display: flex; gap: .25rem; }
-.header-nav a {
-  color: rgba(255,255,255,.7);
-  font-size: .8rem;
-  text-decoration: none;
-  padding: .35rem .75rem;
-  border-radius: var(--radius);
-  transition: background .15s, color .15s;
-}
-.header-nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
-.header-nav a:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
-
-/* ── HERO ── */
-.hero {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding: 7rem 2rem 5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Geometric background pattern */
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 800px 600px at 70% 40%, rgba(15,118,110,.18) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 400px at 20% 80%, rgba(29,78,137,.22) 0%, transparent 60%);
-  pointer-events: none;
-}
-
-/* Grid lines — subtle structure */
-.hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-}
-
-.hero-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-eyebrow {
-  font-family: var(--font-mono);
-  font-size: .68rem;
-  font-weight: 500;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: #5eead4;
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-}
-.hero-eyebrow::before {
-  content: '';
-  display: block;
-  width: 28px;
-  height: 1px;
-  background: #5eead4;
-  flex-shrink: 0;
-}
-
-.hero-heading {
-  font-family: var(--font-display);
-  font-size: clamp(2.4rem, 6vw, 4.5rem);
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.1;
-  letter-spacing: -.03em;
-  margin-bottom: 1.5rem;
-  max-width: 780px;
-}
-.hero-heading em {
-  font-style: italic;
-  font-weight: 300;
-  color: #5eead4;
-}
-
-.hero-body {
-  font-size: 1.05rem;
-  color: var(--off-white);
-  max-width: 540px;
-  margin-bottom: 2.5rem;
-  line-height: 1.7;
-  font-weight: 300;
-}
-
-.hero-actions {
-  display: flex;
-  gap: .75rem;
-  flex-wrap: wrap;
-  margin-bottom: 3.5rem;
-}
-
-.btn-hero-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .8rem 1.6rem;
-  background: var(--teal-700);
-  color: #fff;
-  font-family: var(--font-body);
-  font-size: .9rem;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: var(--radius);
-  transition: background .15s, transform .1s;
-  border: none;
-  cursor: pointer;
-}
-.btn-hero-primary:hover { background: var(--teal-600); transform: translateY(-1px); }
-.btn-hero-primary:focus-visible { outline: 3px solid #5eead4; outline-offset: 3px; }
-.btn-hero-primary:active { transform: none; }
-
-.btn-hero-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .8rem 1.6rem;
-  background: rgba(255,255,255,.1);
-  color: #fff;
-  font-family: var(--font-body);
-  font-size: .9rem;
-  font-weight: 500;
-  text-decoration: none;
-  border-radius: var(--radius);
-  border: 1px solid rgba(255,255,255,.2);
-  transition: background .15s, transform .1s;
-  cursor: pointer;
-}
-.btn-hero-secondary:hover { background: rgba(255,255,255,.16); transform: translateY(-1px); }
-.btn-hero-secondary:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
-
-/* Stats strip */
-.hero-stats {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255,255,255,.1);
-}
-.stat {
-  display: flex;
-  flex-direction: column;
-}
-.stat-n {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -.04em;
-  line-height: 1;
-}
-.stat-l {
-  font-size: .7rem;
-  color: var(--muted-blue);
-  font-family: var(--font-mono);
-  margin-top: .2rem;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-}
-
-/* ── TOOLS SECTION ── */
-.tools-section {
-  background: var(--bg);
-  padding: 5rem 2rem;
-}
-.tools-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-}
-.section-label {
-  font-family: var(--font-mono);
-  font-size: .65rem;
-  font-weight: 600;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--teal-700);
-  margin-bottom: .75rem;
-}
-.section-heading {
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
-  font-weight: 600;
-  color: var(--navy-950);
-  letter-spacing: -.02em;
-  margin-bottom: .5rem;
-  line-height: 1.2;
-}
-.section-sub {
-  color: var(--text-600);
-  font-size: .9rem;
-  margin-bottom: 2.5rem;
-  max-width: 520px;
-}
-
-/* Primary tool card — Evidence Hub */
-.tool-primary {
-  background: var(--navy-950);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: 1.25rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 300px;
-  box-shadow: var(--shadow-lg);
-  transition: transform .18s;
-}
-.tool-primary:hover { transform: translateY(-2px); }
-.tool-primary-copy {
-  padding: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.tool-primary-label {
-  font-family: var(--font-mono);
-  font-size: .62rem;
-  font-weight: 500;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: #5eead4;
-  margin-bottom: .6rem;
-}
-.tool-primary-title {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -.03em;
-  line-height: 1.15;
-  margin-bottom: .75rem;
-}
-.tool-primary-desc {
-  font-size: .85rem;
-  color: var(--off-white);
-  line-height: 1.65;
-  margin-bottom: 1.5rem;
-  font-weight: 300;
-}
-.tool-primary-visual {
-  background: linear-gradient(135deg, rgba(15,118,110,.25) 0%, rgba(29,78,137,.35) 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: .6rem;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-.tool-primary-visual::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
-  background-size: 30px 30px;
-}
-.feature-chip {
-  position: relative;
-  background: rgba(255,255,255,.09);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 99px;
-  padding: .3rem .75rem;
-  font-size: .72rem;
-  color: rgba(255,255,255,.85);
-  font-family: var(--font-mono);
-  white-space: nowrap;
-  backdrop-filter: blur(4px);
-}
-
-/* Secondary tool cards */
-.tools-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-@media (max-width: 860px) { .tools-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) {
-  .tools-grid { grid-template-columns: 1fr; }
-  .tool-primary { grid-template-columns: 1fr; }
-  .tool-primary-visual { display: none; }
-}
-
-.tool-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  text-decoration: none;
-  display: block;
-  transition: box-shadow .15s, transform .15s, border-color .15s;
-  box-shadow: var(--shadow);
-}
-.tool-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-  border-color: var(--teal-700);
-}
-.tool-card:focus-visible {
-  outline: 3px solid var(--navy-700);
-  outline-offset: 3px;
-}
-.tool-card-icon {
-  font-size: 1.5rem;
-  margin-bottom: .75rem;
-  display: block;
-  line-height: 1;
-}
-.tool-card-label {
-  font-family: var(--font-mono);
-  font-size: .6rem;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--teal-700);
-  margin-bottom: .3rem;
-}
-.tool-card-title {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--navy-950);
-  margin-bottom: .5rem;
-  line-height: 1.25;
-}
-.tool-card-desc {
-  font-size: .78rem;
-  color: var(--text-600);
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-.tool-card-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .3rem;
-}
-.chip {
-  background: var(--teal-l);
-  color: var(--teal-700);
-  font-size: .65rem;
-  font-family: var(--font-mono);
-  padding: 2px 8px;
-  border-radius: 99px;
-  border: 1px solid #5eead4;
-}
-.chip.navy {
-  background: var(--sky-l);
-  color: var(--navy-700);
-  border-color: #93c5fd;
-}
-
-/* ── FRAMEWORKS SECTION ── */
-.frameworks-section {
-  background: var(--navy-800);
-  padding: 4rem 2rem;
-}
-.frameworks-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-}
-.frameworks-section .section-heading { color: #fff; }
-.frameworks-section .section-sub { color: var(--muted-blue); }
-
-.frameworks-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: .75rem;
-  margin-top: 2rem;
-}
-@media (max-width: 860px) { .frameworks-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 480px) { .frameworks-grid { grid-template-columns: 1fr; } }
-
-.framework-card {
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  transition: background .15s;
-}
-.framework-card:hover { background: rgba(255,255,255,.1); }
-.framework-abbr {
-  font-family: var(--font-mono);
-  font-size: .8rem;
-  font-weight: 500;
-  color: #5eead4;
-  margin-bottom: .35rem;
-}
-.framework-name {
-  font-size: .82rem;
-  color: var(--off-white);
-  font-weight: 500;
-  margin-bottom: .3rem;
-  line-height: 1.35;
-}
-.framework-desc {
-  font-size: .7rem;
-  color: var(--muted-blue);
-  line-height: 1.5;
-}
-
-/* ── WCAG NOTICE ── */
-.wcag-bar {
-  background: var(--navy-950);
-  padding: 1.25rem 2rem;
-  border-top: 1px solid rgba(255,255,255,.07);
-  border-bottom: 1px solid rgba(255,255,255,.07);
-}
-.wcag-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-.wcag-badge {
-  background: var(--teal-700);
-  color: #fff;
-  font-family: var(--font-mono);
-  font-size: .7rem;
-  font-weight: 500;
-  padding: .3rem .75rem;
-  border-radius: 99px;
-  flex-shrink: 0;
-  letter-spacing: .05em;
-}
-.wcag-text {
-  font-size: .8rem;
-  color: var(--muted-blue);
-}
-.wcag-text strong { color: var(--off-white); }
-
-/* ── GOVERNANCE SECTION ── */
-.governance-section {
-  background: var(--bg);
-  padding: 4rem 2rem;
-}
-.governance-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-}
-.timeline {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-top: 2rem;
-}
-@media (max-width: 700px) { .timeline { grid-template-columns: 1fr; } }
-.timeline-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  border-top: 4px solid var(--navy-700);
-  box-shadow: var(--shadow);
-}
-.timeline-item.t2 { border-top-color: var(--teal-700); }
-.timeline-item.t3 { border-top-color: #6d28d9; }
-.timeline-date {
-  font-family: var(--font-mono);
-  font-size: .68rem;
-  font-weight: 500;
-  color: var(--navy-700);
-  margin-bottom: .3rem;
-  letter-spacing: .04em;
-}
-.timeline-item.t2 .timeline-date { color: var(--teal-700); }
-.timeline-item.t3 .timeline-date { color: #6d28d9; }
-.timeline-title {
-  font-family: var(--font-display);
-  font-size: .95rem;
-  font-weight: 600;
-  color: var(--navy-950);
-  margin-bottom: .3rem;
-}
-.timeline-desc {
-  font-size: .75rem;
-  color: var(--text-600);
-  line-height: 1.55;
-}
-
-/* ── FOOTER ── */
-footer {
-  background: var(--navy-950);
-  padding: 2.5rem 2rem;
-  border-top: 1px solid rgba(255,255,255,.07);
-}
-.footer-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-.footer-brand {
-  font-family: var(--font-display);
-  font-size: .9rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: .3rem;
-}
-.footer-meta {
-  font-size: .72rem;
-  color: var(--muted-blue);
-  line-height: 1.7;
-}
-.footer-meta a {
-  color: var(--muted-blue);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.footer-meta a:hover { color: #fff; }
-.footer-meta a:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; border-radius: 2px; }
-.footer-links { display: flex; flex-direction: column; gap: .4rem; }
-.footer-links a {
-  color: var(--muted-blue);
-  font-size: .78rem;
-  text-decoration: none;
-  transition: color .12s;
-}
-.footer-links a:hover { color: #fff; }
-.footer-links a:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
-
-/* ── STAGGERED ENTRANCE ANIMATION ── */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: none; }
-}
-.hero-eyebrow { animation: fade-up .5s ease both; }
-.hero-heading  { animation: fade-up .5s .1s ease both; }
-.hero-body     { animation: fade-up .5s .2s ease both; }
-.hero-actions  { animation: fade-up .5s .3s ease both; }
-.hero-stats    { animation: fade-up .5s .4s ease both; }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
-    transition-duration: .01ms !important;
-  }
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f5f4f0;color:#1a1916;min-height:100vh;-webkit-font-smoothing:antialiased}
+.skip-link{position:absolute;top:-100%;left:0;background:#1d4e89;color:#fff;padding:10px 18px;font-weight:600;text-decoration:none;z-index:10000;border-radius:0 0 6px 0}
+.skip-link:focus{top:0}
+.page{max-width:1000px;margin:0 auto;padding:3rem 1.5rem 4rem}
+.site-header{display:flex;align-items:flex-start;gap:1.25rem;margin-bottom:3rem;padding-bottom:1.5rem;border-bottom:1px solid #d6d3cb}
+.logo{width:52px;height:52px;background:#0f2d4a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;color:#fff;flex-shrink:0;letter-spacing:-.02em}
+.site-title{font-family:'Fraunces',Georgia,serif;font-size:1.75rem;font-weight:600;color:#0c1f35;line-height:1.15;letter-spacing:-.025em}
+.site-sub{font-size:.8rem;color:#4b5563;margin-top:.2rem}
+.weston-badge{margin-left:auto;flex-shrink:0;background:#0c1f35;color:rgba(255,255,255,.75);font-family:'DM Mono',monospace;font-size:.65rem;padding:4px 10px;border-radius:99px;align-self:center;white-space:nowrap}
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:2rem}
+.pillar{background:#0f2d4a;border-radius:10px;padding:1rem 1.1rem;color:rgba(255,255,255,.9)}
+.pillar-label{font-size:.6rem;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:.35rem}
+.pillar-title{font-family:'Fraunces',serif;font-size:.95rem;font-weight:600;color:#fff;margin-bottom:.25rem}
+.pillar-desc{font-size:.75rem;color:rgba(255,255,255,.65);line-height:1.5}
+.section-label{font-family:'DM Mono',monospace;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;margin-bottom:.75rem;display:block}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:2rem}
+.tool-card{background:#fff;border:1px solid #d6d3cb;border-radius:14px;padding:1.4rem 1.5rem;text-decoration:none;display:block;transition:box-shadow .15s,transform .1s;position:relative;overflow:hidden;color:inherit}
+.tool-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.tool-card.c-navy::before{background:#1d4e89}
+.tool-card.c-teal::before{background:#0f766e}
+.tool-card.c-amber::before{background:#b45309}
+.tool-card.c-purple::before{background:#6d28d9}
+.tool-card:hover{box-shadow:0 8px 28px rgba(0,0,0,.12);transform:translateY(-2px)}
+.tool-card:focus-visible{outline:none;box-shadow:0 0 0 3px #fff,0 0 0 5px #1d4e89}
+.tool-icon{font-size:1.5rem;margin-bottom:.65rem;display:block}
+.tool-name{font-family:'Fraunces',Georgia,serif;font-size:1.05rem;font-weight:600;color:#0c1f35;margin-bottom:.3rem;line-height:1.2}
+.tool-desc{font-size:.8rem;color:#4b5563;line-height:1.55}
+.tool-tags{margin-top:.75rem;display:flex;gap:.35rem;flex-wrap:wrap}
+.tag{font-size:.65rem;font-family:'DM Mono',monospace;background:#f5f4f0;border:1px solid #d6d3cb;border-radius:99px;padding:2px 7px;color:#4b5563}
+.framework-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2.5rem;align-items:center}
+.fw-badge{font-size:.72rem;padding:4px 10px;border-radius:99px;border:1px solid #d6d3cb;background:#fff;color:#1a1916}
+.milestones{display:grid;grid-template-columns:auto 1fr;gap:.4rem 1rem;font-size:.82rem;align-items:baseline;margin-bottom:2.5rem}
+.ms-date{font-family:'DM Mono',monospace;font-size:.72rem;color:#6b7280;white-space:nowrap}
+.site-footer{padding-top:1.5rem;border-top:1px solid #d6d3cb;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.footer-text{font-size:.75rem;color:#6b7280}
+.footer-links{display:flex;gap:1rem;flex-wrap:wrap}
+.footer-link{font-size:.75rem;color:#1d4e89;text-decoration:none}
+.footer-link:hover{text-decoration:underline}
+.footer-link:focus-visible{outline:2px solid #1d4e89;outline-offset:2px;border-radius:2px}
+@media(max-width:640px){.tool-grid,.pillars{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.tool-card{transition:none}}
 </style>
 </head>
 <body>
-
 <a href="#main-content" class="skip-link">Skip to main content</a>
+<div class="page" id="main-content">
 
-<!-- HEADER -->
-<header role="banner">
-  <a href="/" class="header-brand" aria-label="Digital Evidence Hub — home">
-    <div class="header-logo" aria-hidden="true">DPC</div>
+  <header class="site-header" role="banner">
+    <div class="logo" aria-hidden="true">DPC</div>
     <div>
-      <div class="header-wordmark">Digital Evidence Hub</div>
-      <div class="header-college">Weston College Group</div>
+      <div class="site-title">Digital Pedagogy Coach</div>
+      <div class="site-sub">Evidence Hub &amp; Professional Tools &middot; Weston College Group</div>
     </div>
-  </a>
-  <nav class="header-nav" aria-label="Site navigation">
-    <a href="#tools">Tools</a>
-    <a href="#frameworks">Frameworks</a>
-    <a href="#governance">Governance</a>
-    <a href="evidence-hub.html" aria-label="Open Evidence Hub application">Open Hub</a>
-  </nav>
-</header>
+    <span class="weston-badge">Weston College Group</span>
+  </header>
 
-<main id="main-content" tabindex="-1">
-
-<!-- HERO -->
-<section class="hero" aria-labelledby="hero-heading">
-  <div class="hero-inner">
-    <p class="hero-eyebrow" aria-label="Digital Pedagogy Coach · Weston College Group · Academic year 2025 to 2026">
-      Digital Pedagogy Coach · Weston College Group · 2025–26
-    </p>
-    <h1 class="hero-heading" id="hero-heading">
-      Evidence that<br><em>earns its place</em>
-    </h1>
-    <p class="hero-body">
-      A professional evidence, workflow, and reporting suite for the Digital Pedagogy Coach role — capturing coaching, LRAs, Developmental Observations, Digital Leads activity, and professional impact across all 34 curriculum areas.
-    </p>
-    <div class="hero-actions">
-      <a href="evidence-hub.html" class="btn-hero-primary" aria-label="Open the Evidence Hub application">
-        Open Evidence Hub →
-      </a>
-      <a href="Digital_Leads_Training_Plan_2025-27.html" class="btn-hero-secondary"
-        aria-label="View the Digital Leads Training Plan 2025 to 2027">
-        Training Plan
-      </a>
-    </div>
-    <div class="hero-stats" role="region" aria-label="Programme at a glance">
-      <div class="stat">
-        <span class="stat-n">34</span>
-        <span class="stat-l">Curriculum areas</span>
+  <section aria-label="Digital Learning Pyramid" style="margin-bottom:2rem">
+    <span class="section-label">Digital Learning Pyramid</span>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-label">Foundation</div>
+        <div class="pillar-title">Digital Foundations</div>
+        <div class="pillar-desc">Staff confidence, basic tools, Teams environments, accessible resources</div>
       </div>
-      <div class="stat">
-        <span class="stat-n">3</span>
-        <span class="stat-l">Pyramid levels</span>
+      <div class="pillar" style="background:#1d4e89">
+        <div class="pillar-label">Middle</div>
+        <div class="pillar-title">Digital Inclusion</div>
+        <div class="pillar-desc">WCAG 2.2, assistive technology, EHCP digital targets, Learning Without Barriers</div>
       </div>
-      <div class="stat">
-        <span class="stat-n">10</span>
-        <span class="stat-l">Accountabilities</span>
-      </div>
-      <div class="stat">
-        <span class="stat-n">Oct '26</span>
-        <span class="stat-l">3-month review</span>
+      <div class="pillar" style="background:#0f766e">
+        <div class="pillar-label">Summit</div>
+        <div class="pillar-title">Digital Innovation</div>
+        <div class="pillar-desc">AI in teaching, advanced digital pedagogy, Digital Leads programme, sector leadership</div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- WCAG NOTICE -->
-<div class="wcag-bar" role="note" aria-label="Accessibility compliance notice">
-  <div class="wcag-inner">
-    <span class="wcag-badge" aria-label="WCAG 2.2 Level AA compliant">WCAG 2.2 AA</span>
-    <p class="wcag-text">
-      <strong>All tools meet WCAG 2.2 AA standards.</strong>
-      Colour contrast ratios verified programmatically. Screen reader compatible. Keyboard navigable. Focus indicators throughout. Reduced motion respected.
-    </p>
-  </div>
-</div>
+  <main>
+    <span class="section-label" id="tools-heading">Tools</span>
+    <div class="tool-grid" role="list" aria-labelledby="tools-heading">
 
-<!-- TOOLS -->
-<section class="tools-section" id="tools" aria-labelledby="tools-heading">
-  <div class="tools-inner">
-    <p class="section-label" aria-hidden="true">Tool suite</p>
-    <h2 class="section-heading" id="tools-heading">Everything in one place</h2>
-    <p class="section-sub">Four tools. One data model. Load your JSON at the start of the day — save it at the end.</p>
-
-    <!-- Primary tool: Evidence Hub -->
-    <article class="tool-primary" aria-labelledby="hub-card-title">
-      <div class="tool-primary-copy">
-        <p class="tool-primary-label" aria-hidden="true">Primary tool</p>
-        <h3 class="tool-primary-title" id="hub-card-title">DPC Evidence Hub</h3>
-        <p class="tool-primary-desc">
-          The front door. Log coaching sessions, LRAs, Developmental Observations, meetings, Teach-Meets, Digital Health Checks, and own CPD. Referral inbox with workflow threads. Three-tier tag taxonomy mapped to Ofsted EIF, DTPF, and the Hyper platform. AI-assisted report generation for governance reviews.
-        </p>
-        <a href="evidence-hub.html" class="btn-hero-primary" aria-label="Open the Evidence Hub">
-          Open Evidence Hub →
-        </a>
-      </div>
-      <div class="tool-primary-visual" role="img" aria-label="Evidence Hub feature highlights: weekly view, LRA capture, thread tracking, tag taxonomy, report builder, HoA tracker">
-        <span class="feature-chip">📅 Weekly View</span>
-        <span class="feature-chip">🚶 LRA Capture</span>
-        <span class="feature-chip">🔗 Thread tracking</span>
-        <span class="feature-chip">🏷 Tag taxonomy</span>
-        <span class="feature-chip">⬡ Report Builder</span>
-        <span class="feature-chip">◉ HoA Tracker</span>
-        <span class="feature-chip">📚 Own CPD</span>
-      </div>
-    </article>
-
-    <!-- Secondary tools grid -->
-    <div class="tools-grid" role="list">
-      <article class="tool-card" role="listitem" aria-labelledby="dl-card-title">
-        <span class="tool-card-icon" aria-hidden="true">📊</span>
-        <p class="tool-card-label" aria-hidden="true">Activity log</p>
-        <h3 class="tool-card-title" id="dl-card-title">Digital Leads Dashboard</h3>
-        <p class="tool-card-desc">
-          Load the Digital Leads Activity Log Excel file directly from OneDrive. Five Chart.js visualisations — activity by type, area, Digital Lead, and over time.
-        </p>
-        <div class="tool-card-chips" aria-label="Features">
-          <span class="chip">File System Access API</span>
-          <span class="chip">SheetJS</span>
-          <span class="chip navy">Excel serial date fix</span>
+      <a href="evidence-hub.html" class="tool-card c-navy" role="listitem">
+        <span class="tool-icon" aria-hidden="true">&#9672;</span>
+        <div class="tool-name">DPC Evidence Hub</div>
+        <div class="tool-desc">The main tool. Log all activity &mdash; coaching, LRAs, Dev Obs, meetings, Teach-Meets. Manage workflow threads, referrals and tasks. Track HoA progress. Build governance reports.</div>
+        <div class="tool-tags">
+          <span class="tag">Evidence log</span>
+          <span class="tag">HoA Tracker</span>
+          <span class="tag">LRA &amp; Dev Obs</span>
+          <span class="tag">Threads</span>
+          <span class="tag">Report builder</span>
         </div>
-      </article>
+      </a>
 
-      <article class="tool-card" role="listitem" aria-labelledby="tp-card-title">
-        <a href="Digital_Leads_Training_Plan_2025-27.html" style="text-decoration:none;color:inherit;display:contents"
-          aria-label="Open Digital Leads Training Plan 2025 to 2027">
-          <span class="tool-card-icon" aria-hidden="true">🗓</span>
-          <p class="tool-card-label" aria-hidden="true">CPD planning</p>
-          <h3 class="tool-card-title" id="tp-card-title">Digital Leads Training Plan 2025–27</h3>
-          <p class="tool-card-desc">
-            Ten-page interactive training plan covering the three-phase Digital Leads CPD pathway, all-staff development, learner digital skills, and quality cycle integration.
-          </p>
-          <div class="tool-card-chips" aria-label="Features">
-            <span class="chip">Phase 1 · 2 · 3</span>
-            <span class="chip navy">Jisc sequencing</span>
-            <span class="chip">Quality cycle</span>
-          </div>
-        </a>
-      </article>
+      <a href="Digital_Leads_Training_Plan_2025-27.html" class="tool-card c-teal" role="listitem">
+        <span class="tool-icon" aria-hidden="true">&#127891;</span>
+        <div class="tool-name">Digital Leads Training Plan</div>
+        <div class="tool-desc">Three-phase Digital Leads CPD pathway &mdash; Foundations, Inclusion, Innovation. Staff development timeline, Jisc Discovery Tool sequencing, and governance milestones.</div>
+        <div class="tool-tags">
+          <span class="tag">Phase 1&ndash;3</span>
+          <span class="tag">CPD pathway</span>
+          <span class="tag">Jisc BDC</span>
+          <span class="tag">2025&ndash;27</span>
+        </div>
+      </a>
 
-      <article class="tool-card" role="listitem" aria-labelledby="toolkit-card-title">
-        <a href="digital-pedagogy-toolkit.html" style="text-decoration:none;color:inherit;display:contents"
-          aria-label="Open Digital Pedagogy Toolkit">
-          <span class="tool-card-icon" aria-hidden="true">🛠</span>
-          <p class="tool-card-label" aria-hidden="true">Resource</p>
-          <h3 class="tool-card-title" id="toolkit-card-title">Digital Pedagogy Toolkit</h3>
-          <p class="tool-card-desc">
-            Eight-page HTML resource for staff, organised around the Digital Learning Pyramid. Editable tables, expandable stage cards, and a JSON-backed action plan.
-          </p>
-          <div class="tool-card-chips" aria-label="Features">
-            <span class="chip">Learning Pyramid</span>
-            <span class="chip navy">Editable tables</span>
-            <span class="chip">Action plan</span>
-          </div>
-        </a>
-      </article>
-    </div>
-  </div>
-</section>
+      <a href="digital-skills-framework.html" class="tool-card c-amber" role="listitem">
+        <span class="tool-icon" aria-hidden="true">&#8862;</span>
+        <div class="tool-name">Digital Skills Framework</div>
+        <div class="tool-desc">Weston College digital skills framework mapped to all 34 curriculum areas. Core digital competencies, subject-specific tools, and EDS category alignment.</div>
+        <div class="tool-tags">
+          <span class="tag">34 areas</span>
+          <span class="tag">EDS</span>
+          <span class="tag">DigComp 3.0</span>
+        </div>
+      </a>
 
-<!-- FRAMEWORKS -->
-<section class="frameworks-section" id="frameworks" aria-labelledby="frameworks-heading">
-  <div class="frameworks-inner">
-    <p class="section-label" aria-hidden="true">Strategic alignment</p>
-    <h2 class="section-heading" id="frameworks-heading">Framework foundations</h2>
-    <p class="section-sub">All activity mapped to national frameworks and the Ofsted Education Inspection Framework.</p>
-    <div class="frameworks-grid" role="list">
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">ETF DTPF</div>
-        <div class="framework-name">Digital Teaching Professional Framework</div>
-        <div class="framework-desc">Six domains: Learning Design, Content Creation, Communication, Learner Support, Assessment, Digital Competence.</div>
-      </article>
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">DigCompEdu</div>
-        <div class="framework-name">European Educators' Digital Competence</div>
-        <div class="framework-desc">Six areas of professional digital competence for educators, underpinning staff capability mapping.</div>
-      </article>
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">Jisc BDC</div>
-        <div class="framework-name">Building Digital Capability</div>
-        <div class="framework-desc">Discovery Tool sequencing: Teaching staff (Sept) → Accessibility (Nov) → AI digital skills (Feb).</div>
-      </article>
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">Ofsted EIF</div>
-        <div class="framework-name">Education Inspection Framework</div>
-        <div class="framework-desc">Quality of Education · Inclusion (standalone grade, Nov 2025) · Learner Experience · Leadership &amp; Management.</div>
-      </article>
+      <a href="dl-dashboard.html" class="tool-card c-purple" role="listitem">
+        <span class="tool-icon" aria-hidden="true">&#128202;</span>
+        <div class="tool-name">Digital Leads Activity Dashboard</div>
+        <div class="tool-desc">Load the Digital Leads Activity Log.xlsx from OneDrive. View sessions, focus areas, confidence levels, health checks &mdash; all processed locally in your browser.</div>
+        <div class="tool-tags">
+          <span class="tag">Excel &rarr; Charts</span>
+          <span class="tag">No upload</span>
+          <span class="tag">Local browser</span>
+        </div>
+      </a>
+
     </div>
 
-    <div class="frameworks-grid" role="list" style="margin-top:.75rem">
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">DLC Pyramid</div>
-        <div class="framework-name">Digital Learning Pyramid</div>
-        <div class="framework-desc">Digital Foundations → Digital Inclusion → Digital Innovation. The primary organising framework for all staff conversations.</div>
-      </article>
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">WCAG 2.2</div>
-        <div class="framework-name">Web Content Accessibility Guidelines</div>
-        <div class="framework-desc">Level AA minimum across all tools. Contrast ratios verified programmatically before code is written.</div>
-      </article>
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">DigComp 3.0</div>
-        <div class="framework-name">European Digital Competence Framework</div>
-        <div class="framework-desc">Learner digital skills framework underpinning the EDS and Century diagnostic approach.</div>
-      </article>
-      <article class="framework-card" role="listitem">
-        <div class="framework-abbr">LWB</div>
-        <div class="framework-name">Learning Without Barriers</div>
-        <div class="framework-desc">Weston College's inclusion thread, running through every level of the Digital Learning Pyramid and every tool.</div>
-      </article>
+    <section aria-label="Underpinning frameworks" style="margin-bottom:2rem">
+      <div class="framework-row">
+        <span class="section-label" style="width:100%;margin-bottom:.4rem">Underpinning frameworks</span>
+        <span class="fw-badge">ETF DTPF</span>
+        <span class="fw-badge">DigCompEdu</span>
+        <span class="fw-badge">Jisc BDC</span>
+        <span class="fw-badge">DigComp 3.0</span>
+        <span class="fw-badge">Ofsted EIF</span>
+        <span class="fw-badge">WCAG 2.2 AA</span>
+        <span class="fw-badge">Century EDS</span>
+        <span class="fw-badge">Learning Without Barriers</span>
+      </div>
+    </section>
+
+    <section aria-label="Governance milestones" style="margin-bottom:2.5rem">
+      <span class="section-label">Governance milestones</span>
+      <div class="milestones">
+        <span class="ms-date">Oct 2026</span><span>3-Month Pilot Review &mdash; baseline established, coaching initiated, Jisc deployed</span>
+        <span class="ms-date">Apr 2027</span><span>9-Month Pilot Review &mdash; progress across all 8 KPI areas</span>
+        <span class="ms-date">Jul 2027</span><span>18-Month Pilot Review &mdash; comprehensive evidence portfolio</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-text">Graeme Wright &middot; Digital Pedagogy Coach &middot; Quality &amp; Innovation &middot; Weston College Group</div>
+    <div class="footer-links">
+      <a href="https://www.jisc.ac.uk/building-digital-capability" class="footer-link" target="_blank" rel="noopener">Jisc BDC &#8599;</a>
+      <a href="https://www.etfoundation.co.uk/our-investment/digital/" class="footer-link" target="_blank" rel="noopener">ETF DTPF &#8599;</a>
+      <a href="https://www.weston.ac.uk" class="footer-link" target="_blank" rel="noopener">Weston College &#8599;</a>
     </div>
-  </div>
-</section>
+  </footer>
 
-<!-- GOVERNANCE -->
-<section class="governance-section" id="governance" aria-labelledby="governance-heading">
-  <div class="governance-inner">
-    <p class="section-label" aria-hidden="true">Pilot governance</p>
-    <h2 class="section-heading" id="governance-heading">Formal review milestones</h2>
-    <p class="section-sub">Three formal governance reviews anchored to the academic quality cycle. Evidence Hub captures data for all three.</p>
-    <div class="timeline" role="list">
-      <article class="timeline-item t1" role="listitem" aria-labelledby="gov1-title">
-        <div class="timeline-date">October 2026</div>
-        <h3 class="timeline-title" id="gov1-title">3-Month Review</h3>
-        <p class="timeline-desc">Baseline established. HoA conversations complete. Coaching cycle initiated. Jisc Discovery Tool deployed to teaching staff.</p>
-      </article>
-      <article class="timeline-item t2" role="listitem" aria-labelledby="gov2-title">
-        <div class="timeline-date">April 2027</div>
-        <h3 class="timeline-title" id="gov2-title">9-Month Review</h3>
-        <p class="timeline-desc">Progress against all 8 KPI areas. Digital Leads Programme Phase 2 underway. Accessibility videos published. AT Road Map delivered.</p>
-      </article>
-      <article class="timeline-item t3" role="listitem" aria-labelledby="gov3-title">
-        <div class="timeline-date">July 2027</div>
-        <h3 class="timeline-title" id="gov3-title">18-Month Review</h3>
-        <p class="timeline-desc">Comprehensive evidence portfolio. Programme scaled across all 34 areas. Tech for Good strand embedded. Full impact assessment.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-</main>
-
-<!-- FOOTER -->
-<footer role="contentinfo">
-  <div class="footer-inner">
-    <div>
-      <div class="footer-brand">Digital Evidence Hub</div>
-      <p class="footer-meta">
-        Graeme Wright · Digital Pedagogy Coach<br>
-        Quality &amp; Innovation Team · Weston College Group<br>
-        North Somerset · England<br><br>
-        <a href="https://www.jisc.ac.uk/building-digital-capability" target="_blank" rel="noopener"
-          aria-label="Jisc Building Digital Capability — opens in new tab">Jisc BDC</a> ·
-        <a href="https://digitalpedagogy.etfoundation.co.uk/" target="_blank" rel="noopener"
-          aria-label="ETF Digital Teaching Professional Framework — opens in new tab">ETF DTPF</a> ·
-        <a href="https://www.w3.org/WAI/WCAG22/quickref/" target="_blank" rel="noopener"
-          aria-label="WCAG 2.2 Quick Reference — opens in new tab">WCAG 2.2</a>
-      </p>
-    </div>
-    <nav class="footer-links" aria-label="Tools">
-      <a href="evidence-hub.html">Evidence Hub</a>
-      <a href="Digital_Leads_Training_Plan_2025-27.html">Training Plan</a>
-      <a href="digital-pedagogy-toolkit.html">Pedagogy Toolkit</a>
-    </nav>
-  </div>
-</footer>
-
+</div>
 </body>
 </html>
