@@ -22,6 +22,37 @@ const ACTIVITY_TYPES = {
   vfm:          { label:'Value for Money case',      icon:'💰', evidenceId:null   },
 };
 
+/* ── EVIDENCE LINKS (shared pattern) ─────────────────────────── */
+
+let _qcLinkCount = 0;
+
+function addQCEvidenceLink() {
+  const list = document.getElementById('qc-evidence-links-list');
+  if (!list) return;
+  _qcLinkCount++;
+  const n   = _qcLinkCount;
+  const div = document.createElement('div');
+  div.id    = 'qc-link-row-' + n;
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:.5rem;margin-bottom:.5rem;align-items:center';
+  div.innerHTML = `
+    <input type="url" id="qc-link-url-${n}" placeholder="https://…" aria-label="Link URL ${n}">
+    <input type="text" id="qc-link-label-${n}" placeholder="Description" aria-label="Link description ${n}">
+    <button class="btn btn-sm btn-danger" onclick="document.getElementById('qc-link-row-${n}').remove()"
+      aria-label="Remove link">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+function getQCEvidenceLinks() {
+  const links = [];
+  for (let i = 1; i <= _qcLinkCount; i++) {
+    const url   = document.getElementById('qc-link-url-'+i)?.value?.trim();
+    const label = document.getElementById('qc-link-label-'+i)?.value?.trim();
+    if (url) links.push({ url, label: label || url });
+  }
+  return links;
+}
+
 /* ── QUICK CAPTURE ────────────────────────────────────────────── */
 
 let _qcTags = {};
@@ -58,19 +89,23 @@ function initQuickCapture(ctx) {
     }
   }
 
-  // Show thread context if linked
+  // Show thread context if linked — prominent banner
   const threadBanner = document.getElementById('qc-thread-banner');
   if (threadBanner) {
     if (_qcThreadId) {
       const t = DB.threads.find(x => x.id === _qcThreadId);
       threadBanner.style.display = 'block';
       threadBanner.innerHTML = t
-        ? `<div class="flex-center gap-8 mb-8 text-sm">
-            <span>🔗 Adding to thread:</span>
-            <strong>${esc(t.name)}</strong>
-            <button class="btn btn-sm btn-ghost" onclick="_qcThreadId='';document.getElementById('qc-thread-banner').style.display='none'">
-              × Unlink
-            </button>
+        ? `<div style="background:var(--navy-800);color:#fff;padding:.65rem 1rem;border-radius:var(--radius-lg);margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+            <span style="font-size:1rem" aria-hidden="true">🔗</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.7rem;opacity:.7;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em">Adding to thread</div>
+              <div style="font-weight:600;font-size:.9rem">${esc(t.name)}</div>
+              ${t.initiatedBy?`<div style="font-size:.72rem;opacity:.7">Requested by: ${esc(t.initiatedBy)}</div>`:''}
+            </div>
+            <button onclick="_qcThreadId='';initQuickCapture({})"
+              style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .65rem;border-radius:var(--radius);font-size:.75rem;cursor:pointer;white-space:nowrap"
+              aria-label="Unlink from this thread">Unlink</button>
           </div>`
         : '';
     } else {
@@ -79,6 +114,49 @@ function initQuickCapture(ctx) {
   }
 
   updateQCTagButton();
+
+  // Populate the existing-thread selector
+  const threadSel = document.getElementById('qc-link-thread-sel');
+  if (threadSel) {
+    while (threadSel.options.length > 1) threadSel.remove(1);
+    DB.threads
+      .filter(t => t.status === 'active' || t.status === 'awaiting-follow-up')
+      .sort((a, b) => b.updated > a.updated ? 1 : -1)
+      .forEach(t => threadSel.add(new Option(
+        t.name + (t.area ? ' [' + t.area + ']' : ''), t.id
+      )));
+    if (_qcThreadId) threadSel.value = _qcThreadId;
+  }
+}
+
+function linkQCToThread(threadId) {
+  _qcThreadId = threadId;
+  if (threadId) {
+    const cb = document.getElementById('qc-new-thread');
+    if (cb) { cb.checked = false; document.getElementById('qc-thread-row').style.display = 'none'; }
+  }
+  const threadBanner = document.getElementById('qc-thread-banner');
+  if (!threadBanner) return;
+  if (threadId) {
+    const t = DB.threads.find(x => x.id === threadId);
+    threadBanner.style.display = 'block';
+    threadBanner.innerHTML = t
+      ? `<div style="background:var(--navy-800);color:#fff;padding:.65rem 1rem;border-radius:var(--radius-lg);margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+          <span aria-hidden="true">🔗</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.7rem;opacity:.7;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em">Linked to thread</div>
+            <div style="font-weight:600;font-size:.9rem">${esc(t.name)}</div>
+            ${t.initiatedBy ? `<div style="font-size:.72rem;opacity:.7">Requested by: ${esc(t.initiatedBy)}</div>` : ''}
+          </div>
+          <button onclick="linkQCToThread('');document.getElementById('qc-link-thread-sel').value=''"
+            style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .65rem;border-radius:var(--radius);font-size:.75rem;cursor:pointer"
+            aria-label="Unlink from thread">Unlink</button>
+        </div>`
+      : '';
+  } else {
+    threadBanner.style.display = 'none';
+    threadBanner.innerHTML = '';
+  }
 }
 
 function updateQCTagButton() {
@@ -102,7 +180,9 @@ function toggleQCAdvanced() {
   const panel = document.getElementById('qc-advanced');
   const btn   = document.getElementById('qc-advanced-btn');
   if (!panel) return;
-  const open = panel.classList.toggle('open');
+  const open = panel.style.display === 'none' || panel.style.display === '';
+  panel.style.display = open ? 'block' : 'none';
+  panel.setAttribute('aria-hidden', String(!open));
   btn.textContent = open ? '− Hide structured fields' : '+ Add structured fields';
   btn.setAttribute('aria-expanded', String(open));
 }
@@ -167,6 +247,7 @@ function saveQuickCapture() {
     afis:        afis      || '',
     actions:     actions   || '',
     tags:        _qcTags,
+    evidenceLinks: getQCEvidenceLinks(),
     referralId:  _qcReferralId || '',
     threadId:    threadId  || '',
     requestedBy: _qcReferralId ? (DB.referrals.find(r=>r.id===_qcReferralId)?.requestedBy||'') : '',
@@ -225,6 +306,9 @@ function clearQuickCapture() {
   _qcTags       = {};
   _qcReferralId = '';
   _qcThreadId   = '';
+  _qcLinkCount  = 0;
+  const linkList = document.getElementById('qc-evidence-links-list');
+  if (linkList) linkList.innerHTML = '';
 
   // Clear validation states
   document.querySelectorAll('[aria-invalid="true"]').forEach(el => {
@@ -327,6 +411,7 @@ function renderEvidenceLog() {
             ${e.strengths?`<div class="text-xs mt-4"><strong>Str:</strong> ${esc(e.strengths.substring(0,60))}</div>`:''}
             ${e.afis     ?`<div class="text-xs"><strong>AFI:</strong> ${esc(e.afis.substring(0,60))}</div>`:''}
             ${e.requestedBy?`<div class="text-xs text-muted mt-4">📎 From: ${esc(e.requestedBy)}</div>`:''}
+            ${(e.evidenceLinks||[]).length?`<div class="text-xs mt-4">${e.evidenceLinks.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener" class="text-navy" style="margin-right:.4rem">🔗 ${esc(l.label)}</a>`).join('')}</div>`:''}
           </td>
           <td class="text-sm">${esc(aName)}</td>
           <td class="text-xs">
@@ -428,6 +513,31 @@ function renderOwnCPD() {
   renderExternalCPDList();
 }
 
+function addCPDLink(listId, prefix) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const n   = list.children.length + 1;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:.5rem;margin-bottom:.5rem;align-items:center';
+  div.innerHTML = `
+    <input type="url" id="${prefix}-url-${n}" placeholder="https://…" aria-label="Link ${n} URL">
+    <input type="text" id="${prefix}-label-${n}" placeholder="Description" aria-label="Link ${n} description">
+    <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()" aria-label="Remove">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+function getCPDLinks(listId, prefix) {
+  const list  = document.getElementById(listId);
+  if (!list) return [];
+  return Array.from(list.children).map((_, i) => {
+    const n     = i + 1;
+    const url   = document.getElementById(prefix+'-url-'+n)?.value?.trim();
+    const label = document.getElementById(prefix+'-label-'+n)?.value?.trim();
+    return url ? { url, label: label || url } : null;
+  }).filter(Boolean);
+}
+
 function openAddOwnCPDModal() {
   openModal('Log Own CPD / Professional Development', `
     <div class="form-row">
@@ -479,6 +589,11 @@ function openAddOwnCPDModal() {
       <label for="cpd-evidence">Evidence / certificate</label>
       <input type="text" id="cpd-evidence" placeholder="e.g. Certificate saved to SharePoint, Teams recording, URL">
     </div>
+    <div class="form-group">
+      <label>Evidence links</label>
+      <div id="cpd-links-list"></div>
+      <button class="btn btn-sm btn-ghost mt-4" onclick="addCPDLink('cpd-links-list','cpd-link')">+ Add link</button>
+    </div>
   `, [
     { label:'Save CPD record', cls:'btn-primary', action:() => {
       const title = document.getElementById('cpd-title')?.value?.trim();
@@ -493,6 +608,7 @@ function openAddOwnCPDModal() {
         hours:    document.getElementById('cpd-hours')?.value?.trim()    || '',
         impact:   document.getElementById('cpd-impact')?.value?.trim()   || '',
         evidence: document.getElementById('cpd-evidence')?.value?.trim() || '',
+        evidenceLinks: getCPDLinks('cpd-links-list','cpd-link'),
         cpdType:  document.getElementById('cpd-type')?.value || '',
         tags:     {},
         created:  new Date().toISOString(),
@@ -585,6 +701,11 @@ function openAddExternalModal() {
       <label for="ext-actions">Actions / follow-ups</label>
       <textarea id="ext-actions" rows="2" placeholder="What will you do with this learning?"></textarea>
     </div>
+    <div class="form-group">
+      <label>Event links / resources</label>
+      <div id="ext-links-list"></div>
+      <button class="btn btn-sm btn-ghost mt-4" onclick="addCPDLink('ext-links-list','ext-link')">+ Add link</button>
+    </div>
   `, [
     { label:'Save event', cls:'btn-primary', action:() => {
       const title = document.getElementById('ext-title')?.value?.trim();
@@ -598,6 +719,7 @@ function openAddExternalModal() {
         contacts: document.getElementById('ext-contacts')?.value?.trim() || '',
         actions:  document.getElementById('ext-actions')?.value?.trim()  || '',
         extType:  document.getElementById('ext-type')?.value || '',
+        evidenceLinks: getCPDLinks('ext-links-list','ext-link'),
         tags:     {},
         created:  new Date().toISOString(),
       };
@@ -652,10 +774,10 @@ function renderDashboard() {
   const openRef   = DB.referrals.filter(r=>r.status!=='complete').length;
   const openTasks = DB.tasks.filter(t=>t.status!=='done').length;
 
-  document.getElementById('stat-total')?.     && (document.getElementById('stat-total').textContent     = total);
-  document.getElementById('stat-week')?.       && (document.getElementById('stat-week').textContent       = thisWeek);
-  document.getElementById('stat-areas')?.      && (document.getElementById('stat-areas').textContent      = areas);
-  document.getElementById('stat-referrals')?.  && (document.getElementById('stat-referrals').textContent  = openRef);
+  const stTotal = document.getElementById('stat-total');     if (stTotal) stTotal.textContent = total;
+  const stWeek  = document.getElementById('stat-week');       if (stWeek)  stWeek.textContent  = thisWeek;
+  const stAreas = document.getElementById('stat-areas');      if (stAreas) stAreas.textContent = areas;
+  const stRef   = document.getElementById('stat-referrals');  if (stRef)   stRef.textContent   = openRef;
 
   // Recent entries
   const recentEl = document.getElementById('dashboard-recent');
