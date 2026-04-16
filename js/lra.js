@@ -155,7 +155,7 @@ function initLRA(ctx) {
           </div>
           <div class="form-group">
             <label for="lra-type">LRA type</label>
-            <select id="lra-type">
+            <select id="lra-type" onchange="updateLRAPrompts()">
               <option>Learning Walk</option>
               <option>Learning Talk</option>
               <option>Work Review</option>
@@ -173,11 +173,9 @@ function initLRA(ctx) {
         <span class="panel-toggle-icon" aria-hidden="true">▾</span>
       </button>
       <div class="section-panel-body open" id="lra-s2">
-        <div class="notice info mb-12" role="note">
-          <h3>Reference prompts (from Hyper)</h3>
-          <p>Consider: Learning Without Barriers · Digital skills visible in session · Accessibility of resources ·
-          AI use (learner and teacher) · Teams environment quality · Formative assessment approaches ·
-          Evidence of feedback acted upon · SEND / AT tools in use</p>
+        <div class="notice info mb-12" role="note" id="lra-findings-prompt">
+          <h3 id="lra-findings-prompt-title">Learning Walk — reference prompts</h3>
+          <p id="lra-findings-prompt-text">Consider: Learning Without Barriers · Digital skills visible in session · Accessibility of resources · AI use (learner and teacher) · Teams environment quality · Formative assessment approaches · Evidence of feedback acted upon · SEND / AT tools in use</p>
         </div>
         <div class="form-group">
           <label for="lra-findings">Observation notes</label>
@@ -290,6 +288,16 @@ function initLRA(ctx) {
       </div>
     </div>
 
+    <!-- EVIDENCE LINKS -->
+    <div class="card mb-16">
+      <div class="card-title flex-between">
+        Evidence links &amp; resources
+        <span class="text-xs text-muted fw-400">SharePoint, Teams recordings, screenshots, outputs…</span>
+      </div>
+      <div id="lra-evidence-links-list"></div>
+      <button class="btn btn-sm btn-secondary mt-8" onclick="addLRAEvidenceLink()">+ Add link</button>
+    </div>
+
     <!-- SAVE BAR -->
     <div class="flex gap-8 flex-wrap" style="padding:.75rem 0;border-top:1px solid var(--border)">
       <button class="btn btn-primary" onclick="saveLRA()">✦ Save LRA</button>
@@ -307,6 +315,79 @@ function initLRA(ctx) {
   updateLRATagDisplay();
   let _lraActionCount = 1;
   window._lraActionCount = 1;
+}
+
+/* ── LRA TYPE PROMPTS ─────────────────────────────────────────── */
+
+const LRA_PROMPTS = {
+  'Learning Walk': {
+    title: 'Learning Walk — reference prompts',
+    text: 'Consider: Learning Without Barriers · Digital skills visible in session · Accessibility of resources · AI use (learner and teacher) · Teams environment quality · Formative assessment approaches · Evidence of feedback acted upon · SEND / AT tools in use',
+    placeholder: 'What did you observe during the session? Reference digital practice, accessibility tools, TLA strategies, and learner engagement with technology specifically.',
+  },
+  'Learning Talk': {
+    title: 'Learning Talk — reference prompts',
+    text: 'Provide a summary of the questions, discussion topics and learner responses. Consider: Behaviour for learning · Culture and promotion of values (BV) · Planning for individual learning · Assessment and feedback during learning · Challenge and deeper learning · Attendance and punctuality · Resources and equipment · The learning environment · Learners\' readiness to learn · Engagement with learning activities · Focus and mindset · Development of ID skills · Development of maths and English skills · Use of technology to enhance learning · Employability skill development',
+    placeholder: 'Summarise the questions asked, discussion topics covered, and learner responses. What did learners say about their digital experience, skills, and confidence?',
+  },
+  'Work Review': {
+    title: 'Work Review — reference prompts',
+    text: 'Provide a summary of your findings and the context of the reviewed material. Consider: Behaviour for learning · Culture and promotion of values (BV) · Planning for individual learning · Assessment and feedback during learning · Challenge and deeper learning · Attendance and punctuality · Resources and equipment · The learning environment · Learners\' readiness to learn · Engagement with learning activities · Focus and mindset · Development of ID skills · Development of maths and English skills · Use of technology to enhance learning · Employability skill development',
+    placeholder: 'Summarise findings from the reviewed material. What does the work tell you about digital skill development, quality of digital resources, and evidence of teacher feedback on digital outputs?',
+  },
+};
+
+function updateLRAPrompts() {
+  const type    = document.getElementById('lra-type')?.value || 'Learning Walk';
+  const prompts = LRA_PROMPTS[type] || LRA_PROMPTS['Learning Walk'];
+
+  const titleEl = document.getElementById('lra-findings-prompt-title');
+  const textEl  = document.getElementById('lra-findings-prompt-text');
+  const fieldEl = document.getElementById('lra-findings');
+
+  if (titleEl) titleEl.textContent = prompts.title;
+  if (textEl)  textEl.textContent  = prompts.text;
+  if (fieldEl) fieldEl.placeholder = prompts.placeholder;
+}
+
+/* ── EVIDENCE LINKS ───────────────────────────────────────────── */
+
+let _lraEvidenceLinkCount = 0;
+
+function addLRAEvidenceLink() {
+  const list = document.getElementById('lra-evidence-links-list');
+  if (!list) return;
+  _lraEvidenceLinkCount++;
+  const n   = _lraEvidenceLinkCount;
+  const div = document.createElement('div');
+  div.id    = 'lra-link-row-' + n;
+  div.className = 'form-row mb-6';
+  div.style.gridTemplateColumns = '1fr 1fr auto';
+  div.innerHTML = `
+    <div class="form-group" style="margin-bottom:0">
+      <label for="lra-link-url-${n}" class="sr-only">Link URL ${n}</label>
+      <input type="url" id="lra-link-url-${n}" placeholder="https://weston.sharepoint.com/…"
+        aria-label="Evidence link URL ${n}">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label for="lra-link-label-${n}" class="sr-only">Link description ${n}</label>
+      <input type="text" id="lra-link-label-${n}" placeholder="Description (e.g. Teams recording, Screenshot)"
+        aria-label="Evidence link description ${n}">
+    </div>
+    <button class="btn btn-sm btn-danger" onclick="document.getElementById('lra-link-row-${n}').remove()"
+      aria-label="Remove link ${n}" style="align-self:center;margin-top:0">✕</button>
+  `;
+  list.appendChild(div);
+}
+
+function getLRAEvidenceLinks() {
+  const links = [];
+  for (let i = 1; i <= _lraEvidenceLinkCount; i++) {
+    const url   = document.getElementById('lra-link-url-'+i)?.value?.trim();
+    const label = document.getElementById('lra-link-label-'+i)?.value?.trim();
+    if (url) links.push({ url, label: label || url });
+  }
+  return links;
 }
 
 function lraActionRow(n) {
@@ -399,6 +480,7 @@ function saveLRA() {
     referralAction: document.getElementById('lra-referral-type')?.value   || '',
     referralNotes:  document.getElementById('lra-referral-notes')?.value?.trim() || '',
     tags:        _lraTags,
+    evidenceLinks: getLRAEvidenceLinks(),
     referralId:  _lraReferralId || '',
     threadId,
     requestedBy: _lraReferralId ? (DB.referrals.find(r=>r.id===_lraReferralId)?.requestedBy||'') : '',
