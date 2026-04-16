@@ -30,10 +30,11 @@
 <!-- HEADER -->
 <header class="app-header" role="banner">
   <div class="header-brand">
-    <div class="header-logo" aria-hidden="true">DPC</div>
+    <a href="index.html" class="header-logo" style="text-decoration:none"
+      aria-label="Back to Digital Pedagogy Coach home">DPC</a>
     <div>
       <div class="header-title">Digital Pedagogy Coach</div>
-      <div class="header-sub">Evidence Hub · Weston College Group</div>
+      <div class="header-sub">Evidence Hub &middot; Weston College Group</div>
     </div>
   </div>
   <div class="json-status" aria-live="polite">
@@ -261,7 +262,7 @@
       <h2 id="threads-h2">Active Threads</h2>
       <p>Workflow chains — each thread is a complete impact story from referral to outcome.</p>
     </div>
-    <button class="btn btn-primary" onclick="createThread(buildDefaultThreadName(),'Self-initiated');renderThreads();toast('Thread created','success')">
+    <button class="btn btn-primary" onclick="openNewThreadModal()">
       + New thread
     </button>
   </div>
@@ -274,6 +275,7 @@
         <option value="active">Active only</option>
         <option value="awaiting-follow-up">Awaiting follow-up</option>
         <option value="closed">Closed</option>
+        <option value="archived">Archived</option>
       </select>
     </div>
     <div class="form-group" style="align-self:flex-end">
@@ -413,16 +415,23 @@
         </div>
 
         <!-- Thread linking -->
-        <div class="mt-12">
+        <div class="mt-12" style="border-top:1px solid var(--border);padding-top:.75rem">
+          <div class="card-title mb-8">Link to a thread / project</div>
+          <div class="form-group mb-6">
+            <label for="qc-link-thread-sel">Link this entry to an existing thread</label>
+            <select id="qc-link-thread-sel" onchange="linkQCToThread(this.value)">
+              <option value="">— not linked to a thread —</option>
+            </select>
+          </div>
           <label class="tag-checkbox-row" style="margin-bottom:.4rem">
             <input type="checkbox" id="qc-new-thread"
-              onchange="document.getElementById('qc-thread-row').style.display=this.checked?'block':'none'">
-            Start a new workflow thread for this entry
+              onchange="document.getElementById('qc-thread-row').style.display=this.checked?'block':'none';if(this.checked){document.getElementById('qc-link-thread-sel').value=''}">
+            Or start a new workflow thread for this entry
           </label>
           <div id="qc-thread-row" style="display:none">
-            <div class="form-group">
-              <label for="qc-thread-name">Thread name <span class="hint">(auto-suggested)</span></label>
-              <input type="text" id="qc-thread-name" placeholder="Thread name…">
+            <div class="form-group mt-4">
+              <label for="qc-thread-name">Thread name</label>
+              <input type="text" id="qc-thread-name" placeholder="e.g. ENG · Thanos Adamos · Coaching · Apr 2026">
             </div>
           </div>
         </div>
@@ -431,6 +440,15 @@
 
     <!-- Right: tags + save -->
     <div>
+      <div class="card mb-12">
+        <div class="card-title flex-between">
+          Evidence links
+          <button class="btn btn-sm btn-ghost" onclick="addQCEvidenceLink()" aria-label="Add evidence link">+ Add link</button>
+        </div>
+        <div id="qc-evidence-links-list"></div>
+        <p class="text-xs text-muted mt-6">SharePoint files, Teams recordings, screenshots, outputs — anything that substantiates this entry.</p>
+      </div>
+
       <div class="card mb-12">
         <div class="card-title flex-between">
           Tags
