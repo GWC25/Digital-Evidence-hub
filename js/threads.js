@@ -5,6 +5,166 @@
 
 'use strict';
 
+/* ── NEW THREAD MODAL — full project card ────────────────────── */
+
+function openNewThreadModal() {
+  const reqOpts = getRequestedByOptions()
+    .map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  const actionOpts = DB.referralActionTypes
+    .map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  const areaOpts = DB.areas
+    .map(a => `<option value="${esc(a.code)}">${esc(a.code)} · ${esc(a.name)}</option>`).join('');
+
+  openModal('New Thread / Project', `
+    <p class="text-sm text-muted mb-12">
+      A thread is a workflow chain — everything from first contact to evidenced outcome.
+      Fill in what you know now; you can add to it as the work unfolds.
+    </p>
+
+    <div class="form-group">
+      <label for="nt-name">Thread / project name <span class="req" aria-hidden="true">*</span></label>
+      <input type="text" id="nt-name" required aria-required="true"
+        placeholder="e.g. ENG · Thanos Adamos · Teams coaching · Apr 2026">
+      <div class="text-xs text-muted mt-4">Suggested format: [Area] · [Person] · [Focus] · [Month Year]</div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="nt-initiated-by">Initiated by / requested by <span class="req" aria-hidden="true">*</span></label>
+        <select id="nt-initiated-by" aria-required="true">
+          <option value="">— select —</option>
+          ${reqOpts}
+          <option value="__other__">Other (enter below)</option>
+        </select>
+        <div id="nt-other-row" style="display:none;margin-top:.4rem">
+          <input type="text" id="nt-other-name" placeholder="Name / role">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="nt-area">Curriculum area</label>
+        <select id="nt-area">
+          <option value="">— not area-specific —</option>
+          ${areaOpts}
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="nt-staff">Staff involved</label>
+      <input type="text" id="nt-staff"
+        placeholder="e.g. Thanos Adamos, Owen Rearden — or leave blank for team work">
+    </div>
+
+    <div class="form-group">
+      <label for="nt-trigger">What triggered this thread?</label>
+      <div class="input-with-mic" style="align-items:flex-start">
+        <textarea id="nt-trigger" rows="3"
+          placeholder="Paste the message / email / context you received, or describe what you observed that prompted this…"></textarea>
+        <button class="mic-btn" onclick="startDictation('nt-trigger')" aria-label="Dictate" style="margin-top:2px">🎤</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="nt-action-type">Action(s) needed</label>
+      <select id="nt-action-type">
+        <option value="">— select primary action —</option>
+        ${actionOpts}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="nt-notes">Notes / brief for self</label>
+      <div class="input-with-mic" style="align-items:flex-start">
+        <textarea id="nt-notes" rows="3"
+          placeholder="What do you need to do? What's the goal? Any context that will help you when you pick this up later…"></textarea>
+        <button class="mic-btn" onclick="startDictation('nt-notes')" aria-label="Dictate" style="margin-top:2px">🎤</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="nt-deadline">Target / deadline date</label>
+        <input type="date" id="nt-deadline">
+      </div>
+      <div class="form-group">
+        <label for="nt-priority">Priority</label>
+        <select id="nt-priority">
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+    </div>
+  `, [
+    { label: 'Create thread', cls: 'btn-primary', action: () => {
+      const name = document.getElementById('nt-name')?.value?.trim();
+      if (!name) { markInvalid('nt-name', 'Thread name required'); return; }
+
+      let initiatedBy = document.getElementById('nt-initiated-by')?.value || 'Self-initiated';
+      if (initiatedBy === '__other__') {
+        initiatedBy = document.getElementById('nt-other-name')?.value?.trim() || 'Other';
+        addRequestedByOption(initiatedBy);
+      }
+
+      const thread = {
+        id:          genId('thread'),
+        name,
+        initiatedBy,
+        area:        document.getElementById('nt-area')?.value          || '',
+        staff:       document.getElementById('nt-staff')?.value?.trim() || '',
+        trigger:     document.getElementById('nt-trigger')?.value?.trim() || '',
+        actionType:  document.getElementById('nt-action-type')?.value   || '',
+        notes:       document.getElementById('nt-notes')?.value?.trim() || '',
+        deadline:    document.getElementById('nt-deadline')?.value      || '',
+        priority:    document.getElementById('nt-priority')?.value      || 'normal',
+        status:      'active',
+        impactSummary: '',
+        entryIds:    [],
+        referralIds: [],
+        taskIds:     [],
+        created:     new Date().toISOString(),
+        updated:     new Date().toISOString(),
+        closedDate:  '',
+        archivedDate:'',
+      };
+      DB.threads.unshift(thread);
+
+      // Auto-create a task if action type was set
+      if (thread.actionType) {
+        const task = {
+          id:          genId('task'),
+          title:       [thread.actionType, thread.staff || thread.name].filter(Boolean).join(' — '),
+          type:        thread.actionType,
+          referralId:  '',
+          threadId:    thread.id,
+          area:        thread.area,
+          requestedBy: thread.initiatedBy,
+          deadline:    thread.deadline,
+          priority:    thread.priority,
+          status:      'todo',
+          entryId:     '',
+          created:     new Date().toISOString(),
+          notes:       thread.notes,
+        };
+        DB.tasks.unshift(task);
+        thread.taskIds.push(task.id);
+      }
+
+      closeModal();
+      renderThreads();
+      renderWeeklyView();
+      updateReferralBadge();
+      toast('Thread created', 'success');
+    }},
+    { label: 'Cancel', cls: 'btn-secondary', action: closeModal },
+  ], { wide: true });
+
+  // Wire "Other" toggle
+  document.getElementById('nt-initiated-by')?.addEventListener('change', function() {
+    document.getElementById('nt-other-row').style.display = this.value === '__other__' ? 'block' : 'none';
+  });
+}
+
 /* ── REFERRAL CAPTURE ────────────────────────────────────────── */
 
 function openNewReferralModal() {
@@ -484,8 +644,14 @@ function renderThreads() {
 
   const filterStatus = document.getElementById('threads-filter-status')?.value || '';
   let threads = [...DB.threads];
-  if (filterStatus) threads = threads.filter(t => t.status === filterStatus);
-  else threads = threads.filter(t => t.status !== 'closed');
+  if (filterStatus === 'archived') {
+    threads = threads.filter(t => t.status === 'archived');
+  } else if (filterStatus) {
+    threads = threads.filter(t => t.status === filterStatus);
+  } else {
+    // Default: active + waiting only (not closed/archived)
+    threads = threads.filter(t => t.status === 'active' || t.status === 'awaiting-follow-up');
+  }
 
   threads.sort((a, b) => (b.updated > a.updated ? 1 : -1));
 
@@ -519,16 +685,44 @@ function renderThreadCard(t) {
   const openTasks= tasks.filter(tk => tk.status !== 'done');
   const lastEntry= entries[0];
   const nextTask = openTasks.sort((a,b) => (a.deadline||'9999') > (b.deadline||'9999') ? 1 : -1)[0];
-  const statusClass = t.status==='active' ? 'badge-teal' : t.status==='closed' ? 'badge-green' : 'badge-amber';
+  const statusClass = t.status==='active' ? 'badge-teal' : t.status==='closed' || t.status==='archived' ? 'badge-green' : 'badge-amber';
   const overdue = nextTask?.deadline && nextTask.deadline < today();
   const dueToday= nextTask?.deadline === today();
+  const isClosedOrArchived = t.status === 'closed' || t.status === 'archived';
 
-  return `<div class="thread-card mb-12" id="thread-${t.id}" role="article" aria-label="Thread: ${esc(t.name)}">
-    <div class="thread-header">
+  // Ink stamp SVG — deliberately imperfect, slightly rotated, partial ink bleed
+  const stampSVG = isClosedOrArchived ? `
+    <div aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-18deg);
+      pointer-events:none;z-index:10;opacity:.18;user-select:none">
+      <svg width="180" height="72" viewBox="0 0 180 72" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="4" width="172" height="64" rx="6"
+          fill="none" stroke="${t.status==='archived'?'#6d28d9':'#15803d'}" stroke-width="5"
+          stroke-dasharray="2,1.5"
+          style="filter:url(#rough)"/>
+        <text x="90" y="42" text-anchor="middle" dominant-baseline="middle"
+          font-family="Georgia,serif" font-size="26" font-weight="bold" letter-spacing="6"
+          fill="${t.status==='archived'?'#6d28d9':'#15803d'}"
+          style="filter:url(#rough)">${t.status==='archived'?'ARCHIVED':'COMPLETE'}</text>
+        <defs>
+          <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+        </defs>
+      </svg>
+    </div>` : '';
+
+  return `<div class="thread-card mb-12" id="thread-${t.id}" role="article"
+    aria-label="Thread: ${esc(t.name)}"
+    style="position:relative;overflow:hidden;${isClosedOrArchived ? 'opacity:.72;' : ''}">
+    ${stampSVG}
+    <div class="thread-header" style="${isClosedOrArchived ? 'background:var(--bg-subtle)' : ''}">
       <div style="flex:1;min-width:0">
         <div class="thread-title">${esc(t.name)}</div>
         <div class="thread-meta">
-          Initiated by: ${esc(t.initiatedBy)}
+          ${esc(t.initiatedBy)}
+          ${t.area ? `· <span class="badge badge-navy" style="font-size:.62rem">${t.area}</span>` : ''}
+          ${t.staff ? `· ${esc(t.staff)}` : ''}
           · Updated ${fmtDate(t.updated)}
           · ${entries.length} entr${entries.length===1?'y':'ies'}
         </div>
@@ -540,6 +734,10 @@ function renderThreadCard(t) {
     </div>
 
     <div class="thread-body">
+      ${t.trigger ? `<div class="text-xs text-muted mb-8" style="padding:.4rem .6rem;background:var(--bg);border-radius:var(--radius);border-left:3px solid var(--border-strong)">
+        <strong>Trigger:</strong> ${esc(t.trigger.substring(0,120))}${t.trigger.length>120?'…':''}
+      </div>` : ''}
+
       ${nextTask ? `<div class="thread-next-action ${overdue?'overdue':dueToday?'today':''}">
         <strong>Next:</strong> ${esc(nextTask.title)}
         ${nextTask.deadline ? `<span class="task-due ${overdue?'overdue':dueToday?'today':'soon'}" style="margin-left:.4rem">
@@ -548,7 +746,7 @@ function renderThreadCard(t) {
       </div>` : ''}
 
       ${lastEntry ? `<div class="text-xs text-muted mb-8">
-        Last activity: ${fmtDate(lastEntry.date)} · ${esc(lastEntry.subtype||lastEntry.type||'Entry')} · ${esc(lastEntry.title?.substring(0,60)||'')}
+        Last: ${fmtDate(lastEntry.date)} · ${esc(lastEntry.subtype||lastEntry.type||'Entry')} · ${esc(lastEntry.title?.substring(0,55)||'')}
       </div>` : ''}
 
       ${t.impactSummary ? `<div class="log-entry status-complete mb-8">
@@ -557,19 +755,35 @@ function renderThreadCard(t) {
       </div>` : ''}
 
       <div class="flex gap-6 flex-wrap">
-        <button class="btn btn-sm btn-primary" onclick="openQuickCaptureForThread('${t.id}')">+ Add entry</button>
-        <button class="btn btn-sm btn-secondary" onclick="openThreadDetail('${t.id}')">Full history</button>
-        <button class="btn btn-sm btn-secondary" onclick="addManualTask('${t.id}')">+ Task</button>
-        ${t.status !== 'closed' ? `
+        ${!isClosedOrArchived ? `
+          <button class="btn btn-sm btn-primary" onclick="openQuickCaptureForThread('${t.id}')">+ Add entry</button>
+          <button class="btn btn-sm btn-secondary" onclick="addManualTask('${t.id}')">+ Task</button>
           <button class="btn btn-sm btn-secondary" onclick="setThreadStatus('${t.id}','awaiting-follow-up')">Mark waiting</button>
           <button class="btn btn-sm btn-teal" onclick="closeThread('${t.id}')">Close thread</button>
-        ` : `
+        ` : t.status === 'closed' ? `
           <button class="btn btn-sm btn-secondary" onclick="setThreadStatus('${t.id}','active')">Re-open</button>
+          <button class="btn btn-sm btn-secondary" style="color:var(--purple-700);border-color:var(--purple-700)" onclick="archiveThread('${t.id}')">📦 Archive</button>
+        ` : `
+          <button class="btn btn-sm btn-secondary" onclick="setThreadStatus('${t.id}','active')">Restore from archive</button>
         `}
+        <button class="btn btn-sm btn-secondary" onclick="openThreadDetail('${t.id}')">Full history</button>
         <button class="btn btn-sm btn-ghost" onclick="deleteThread('${t.id}')" aria-label="Delete thread">Delete</button>
       </div>
     </div>
   </div>`;
+}
+
+function archiveThread(threadId) {
+  const t = DB.threads.find(x => x.id === threadId);
+  if (!t) return;
+  if (t.status !== 'closed') {
+    toast('Close the thread before archiving', 'error'); return;
+  }
+  t.status      = 'archived';
+  t.archivedDate= today();
+  t.updated     = new Date().toISOString();
+  renderThreads();
+  toast('Thread archived', 'success');
 }
 
 function setThreadStatus(threadId, status) {
