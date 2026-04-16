@@ -468,7 +468,7 @@ function truncate(str, len) {
 // Populate all filter/select dropdowns that reference areas
 function renderAreaDropdowns() {
   const selectors = ['#qc-area','#filter-area','#lra-area','#devobs-area',
-                     '#cl-filter-area','#mt-filter-area','#ref-area'];
+                     '#cl-filter-area','#mt-filter-area','#ref-area','#res-filter-area'];
   selectors.forEach(sel => {
     const el = document.querySelector(sel);
     if (!el) return;
