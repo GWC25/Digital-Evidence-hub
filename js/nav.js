@@ -44,6 +44,7 @@ function navigateTo(page, context) {
     'own-cpd':          'CPD',
     'dl-dashboard':     'Digital Leads',
     'report-builder':   'Report',
+    'resources':        'Resource',
     'settings':         'Settings',
   };
   const label = navMap[page];
@@ -70,7 +71,7 @@ function navigateTo(page, context) {
   if (page === 'staff-dev')        renderStaffRecords();
   if (page === 'own-cpd')          renderOwnCPD();
   if (page === 'dl-dashboard')     initDLDashboard();
-  if (page === 'report-builder')   initReportBuilder();
+  if (page === 'resources')        { renderResourceLibrary(); renderAreaDropdowns(); }
   if (page === 'settings')         { renderTagManagement(); renderRatingFields(); renderSettingsData(); }
 
   // Update referral badge on nav
