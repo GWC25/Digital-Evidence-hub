@@ -41,6 +41,7 @@
     <div class="json-dot" id="json-dot" aria-hidden="true"></div>
     <span id="json-status-text">No file linked</span>
   </div>
+  <span id="autosave-status" style="font-size:.68rem;color:rgba(255,255,255,.5);font-family:var(--font-mono);margin-left:.5rem" aria-live="polite"></span>
   <div class="header-actions">
     <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.25)"
       onclick="loadJSON()">📂 Load</button>
@@ -162,6 +163,7 @@
         This week's tasks
         <button class="btn btn-sm btn-ghost" onclick="addManualTask()" aria-label="Add task">+ Task</button>
       </div>
+      <div id="week-picker-row"></div>
       <div id="weekly-tasks-list" role="list" aria-label="Outstanding tasks"></div>
     </div>
 
