@@ -493,6 +493,7 @@ function saveLRA() {
     if (idx !== -1) DB.entries[idx] = entry;
   } else {
     DB.entries.unshift(entry);
+    markDirty();
   }
 
   if (threadId) linkEntryToThread(entry.id, threadId);
