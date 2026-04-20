@@ -356,7 +356,7 @@ function saveReferral() {
 
   // Auto-create a task from this referral
   createTaskFromReferral(referral);
-
+  markDirty();
   closeModal();
   renderReferralInbox();
   renderWeeklyView();
@@ -544,10 +544,73 @@ function addManualTask(threadId) {
 function completeTask(taskId) {
   const task = DB.tasks.find(t => t.id === taskId);
   if (!task) return;
-  task.status = task.status === 'done' ? 'todo' : 'done';
+  const wasDone = task.status === 'done';
+  task.status = wasDone ? 'todo' : 'done';
   task.completedDate = task.status === 'done' ? today() : '';
-  renderWeeklyView();
-  renderThreads();
+  markDirty();
+
+  // Instant visual update on the checkbox without full re-render
+  document.querySelectorAll(`[onclick*="${taskId}"]`).forEach(el => {
+    if (el.classList.contains('task-checkbox')) {
+      el.classList.toggle('done', task.status === 'done');
+      el.setAttribute('aria-checked', String(task.status === 'done'));
+      el.textContent = task.status === 'done' ? '✓' : '';
+    }
+  });
+
+  if (task.status === 'done') {
+    launchConfetti();
+    toast('Task done! 🎉', 'success');
+  }
+
+  // Defer full re-render so confetti fires first
+  setTimeout(() => {
+    renderWeeklyView();
+    renderThreads();
+  }, 400);
+}
+
+function launchConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colours = ['#1d4e89','#065f46','#92400e','#b45309','#ffffff','#fbbf24','#34d399'];
+  const pieces = Array.from({length: 120}, () => ({
+    x: Math.random() * canvas.width,
+    y: -10 - Math.random() * 80,
+    r: 4 + Math.random() * 6,
+    d: 1.5 + Math.random() * 2.5,
+    colour: colours[Math.floor(Math.random() * colours.length)],
+    tilt: Math.random() * 360,
+    tiltSpeed: (Math.random() - 0.5) * 4,
+    drift: (Math.random() - 0.5) * 1.5,
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.beginPath();
+      ctx.fillStyle = p.colour;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.tilt * Math.PI / 180);
+      ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+      ctx.restore();
+      p.y += p.d;
+      p.x += p.drift;
+      p.tilt += p.tiltSpeed;
+      if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width; }
+    });
+    frame++;
+    if (frame < 90) requestAnimationFrame(draw);
+    else { canvas.style.opacity = '0'; canvas.style.transition = 'opacity .4s'; setTimeout(() => canvas.remove(), 450); }
+  }
+  draw();
 }
 
 /* ── RENDER: REFERRAL INBOX ──────────────────────────────────── */
@@ -589,6 +652,7 @@ function renderReferralInbox() {
             <span>From: <strong>${esc(r.requestedBy)}</strong></span>
             ${r.area ? `<span>· ${esc(r.area)}</span>` : ''}
             <span>· Received ${fmtDate(r.date)}</span>
+            ${r.staffInvolved ? `<span>· Staff: ${esc(r.staffInvolved)}</span>` : ''}
           </div>
         </div>
         <div class="flex gap-6" style="flex-shrink:0;align-items:flex-start;flex-wrap:wrap">
@@ -600,6 +664,7 @@ function renderReferralInbox() {
       </div>
       <div class="thread-body">
         ${r.context ? `<p class="text-sm mb-8">${esc(r.context)}</p>` : ''}
+        ${r.notes ? `<p class="text-xs text-muted mb-8">${esc(r.notes.substring(0,140))}${r.notes.length>140?'…':''}</p>` : ''}
         ${thread ? `<div class="text-xs text-muted mb-8">
           Thread: <strong>${esc(thread.name)}</strong>
           · ${thread.entryIds.length} entr${thread.entryIds.length===1?'y':'ies'}
@@ -607,11 +672,13 @@ function renderReferralInbox() {
         </div>` : ''}
         ${taskCount ? `<div class="text-xs text-amber mb-8">⚡ ${taskCount} task${taskCount>1?'s':''} outstanding</div>` : ''}
         <div class="flex gap-6 flex-wrap">
-          <button class="btn btn-sm btn-primary" onclick="openEntryFormForReferral('${r.id}')">
-            + Start ${esc(r.actionType)}
+          <button class="btn btn-sm btn-primary" onclick="openNextActionsModal('${r.id}')">
+            ➜ Next action
           </button>
-          ${thread ? `<button class="btn btn-sm btn-secondary" onclick="openThreadDetail('${thread.id}')">View thread</button>` : ''}
-          <button class="btn btn-sm btn-secondary" onclick="markReferralComplete('${r.id}')">Mark complete</button>
+          <button class="btn btn-sm btn-secondary" onclick="openReferralDetail('${r.id}')">View details</button>
+          <button class="btn btn-sm btn-secondary" onclick="editReferral('${r.id}')">Edit</button>
+          ${thread ? `<button class="btn btn-sm btn-secondary" onclick="openThreadDetail('${thread.id}')">Thread</button>` : ''}
+          <button class="btn btn-sm btn-ghost" onclick="markReferralComplete('${r.id}')">Complete</button>
           <button class="btn btn-sm btn-ghost" onclick="deleteReferral('${r.id}')" aria-label="Delete referral">Delete</button>
         </div>
       </div>
@@ -619,10 +686,341 @@ function renderReferralInbox() {
   }).join('');
 }
 
+/* ── REFERRAL DETAIL MODAL (Issue 1) ─────────────────────────── */
+
+function openReferralDetail(referralId) {
+  const r = DB.referrals.find(x => x.id === referralId);
+  if (!r) return;
+  const thread    = r.threadId ? DB.threads.find(t => t.id === r.threadId) : null;
+  const tasks     = DB.tasks.filter(t => t.referralId === r.id);
+  const entries   = thread ? DB.entries.filter(e => thread.entryIds.includes(e.id))
+    .sort((a,b) => b.date.localeCompare(a.date)) : [];
+
+  const taskHtml = tasks.length ? tasks.map(tk => `
+    <div class="task-item" role="listitem">
+      <div class="task-checkbox ${tk.status==='done'?'done':''}"
+        onclick="completeTask('${tk.id}')" role="checkbox" aria-checked="${tk.status==='done'}" tabindex="0"
+        onkeydown="if(event.key===' '||event.key==='Enter')completeTask('${tk.id}')">
+        ${tk.status==='done'?'✓':''}
+      </div>
+      <div class="task-body">
+        <div class="task-title ${tk.status==='done'?'done':''}">${esc(tk.title)}</div>
+        <div class="task-meta">${tk.assignedTo?esc(tk.assignedTo)+' · ':''}${tk.type||''}</div>
+      </div>
+      ${tk.deadline ? `<span class="task-due ${tk.deadline<today()?'overdue':tk.deadline===today()?'today':'soon'}">${fmtDate(tk.deadline)}</span>` : ''}
+    </div>
+  `).join('') : '<p class="text-sm text-muted">No tasks yet.</p>';
+
+  const entryHtml = entries.length ? entries.slice(0,5).map(e => `
+    <div class="log-entry status-active mb-8">
+      <div class="log-meta"><span>${fmtDate(e.date)}</span><span>·</span><span>${esc(e.subtype||e.type||'Entry')}</span></div>
+      <p class="fw-600 text-sm">${esc(e.title)}</p>
+      ${e.notes ? `<p class="text-sm text-muted mt-4">${esc(e.notes.substring(0,100))}${e.notes.length>100?'…':''}</p>` : ''}
+    </div>
+  `).join('') : '';
+
+  openModal(`📥 ${esc(r.actionType)}${r.regarding?' — '+esc(r.regarding):''}`, `
+    <div class="flex gap-6 mb-12 flex-wrap">
+      <span class="badge ${r.status==='open'?'badge-teal':'badge-green'}">${r.status}</span>
+      <span class="badge">${r.priority}</span>
+      <span class="badge">From ${esc(r.requestedBy)}</span>
+      ${r.deadline ? `<span class="task-due ${r.deadline<today()?'overdue':'soon'}">Due ${fmtDate(r.deadline)}</span>` : ''}
+    </div>
+
+    <div class="form-row mb-12" style="grid-template-columns:1fr 1fr">
+      <div><div class="text-xs text-muted mb-4">Received</div><div class="text-sm fw-600">${fmtDate(r.date)}</div></div>
+      ${r.area ? `<div><div class="text-xs text-muted mb-4">Area</div><div class="text-sm fw-600">${esc(r.area)}</div></div>` : ''}
+      ${r.staffInvolved ? `<div><div class="text-xs text-muted mb-4">Staff involved</div><div class="text-sm fw-600">${esc(r.staffInvolved)}</div></div>` : ''}
+    </div>
+
+    ${r.context ? `<div class="card mb-12" style="background:var(--bg-subtle)">
+      <div class="text-xs text-muted mb-4 fw-600">Context / trigger message</div>
+      <p class="text-sm">${esc(r.context)}</p>
+    </div>` : ''}
+
+    ${r.notes ? `<div class="mb-12"><div class="text-xs text-muted mb-4 fw-600">Notes</div>
+      <p class="text-sm">${esc(r.notes)}</p></div>` : ''}
+
+    <div class="card-title mb-8">Tasks (${tasks.length})</div>
+    ${taskHtml}
+
+    ${entries.length ? `<div class="card-title mt-16 mb-8">Recent thread activity</div>${entryHtml}` : ''}
+  `, [
+    { label: '➜ Next action', cls: 'btn-primary', action: () => { closeModal(); openNextActionsModal(r.id); } },
+    { label: 'Edit referral', cls: 'btn-secondary', action: () => { closeModal(); editReferral(r.id); } },
+    thread ? { label: 'View full thread', cls: 'btn-secondary', action: () => { closeModal(); openThreadDetail(thread.id); } } : null,
+    { label: 'Close', cls: 'btn-ghost', action: closeModal },
+  ].filter(Boolean));
+}
+
+/* ── EDIT REFERRAL (Issue 3) ─────────────────────────────────── */
+
+function editReferral(referralId) {
+  const r = DB.referrals.find(x => x.id === referralId);
+  if (!r) return;
+  const areaOpts = DB.areas.map(a =>
+    `<option value="${esc(a.code)}" ${r.area===a.code?'selected':''}>${esc(a.code)} · ${esc(a.name)}</option>`
+  ).join('');
+
+  openModal('Edit referral', `
+    <div class="form-row">
+      <div class="form-group">
+        <label for="edit-ref-date">Date received</label>
+        <input type="date" id="edit-ref-date" value="${r.date}">
+      </div>
+      <div class="form-group">
+        <label for="edit-ref-deadline">Deadline</label>
+        <input type="date" id="edit-ref-deadline" value="${r.deadline||''}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="edit-ref-by">Requested by</label>
+        <input type="text" id="edit-ref-by" value="${esc(r.requestedBy||'')}">
+      </div>
+      <div class="form-group">
+        <label for="edit-ref-priority">Priority</label>
+        <select id="edit-ref-priority">
+          ${['normal','high','urgent'].map(p=>`<option ${r.priority===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="edit-ref-action">Action type</label>
+      <input type="text" id="edit-ref-action" value="${esc(r.actionType||'')}">
+    </div>
+    <div class="form-group">
+      <label for="edit-ref-re">Regarding</label>
+      <input type="text" id="edit-ref-re" value="${esc(r.regarding||'')}">
+    </div>
+    <div class="form-group">
+      <label for="edit-ref-area">Curriculum area</label>
+      <select id="edit-ref-area">
+        <option value="">— select area —</option>
+        ${areaOpts}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="edit-ref-staff">Staff involved</label>
+      <input type="text" id="edit-ref-staff" value="${esc(r.staffInvolved||'')}" placeholder="Names of staff involved">
+    </div>
+    <div class="form-group">
+      <label for="edit-ref-context">Context / trigger message</label>
+      <textarea id="edit-ref-context" rows="3">${esc(r.context||'')}</textarea>
+    </div>
+    <div class="form-group">
+      <label for="edit-ref-notes">Notes</label>
+      <textarea id="edit-ref-notes" rows="2">${esc(r.notes||'')}</textarea>
+    </div>
+  `, [
+    { label: 'Save changes', cls: 'btn-primary', action: () => {
+      r.date         = document.getElementById('edit-ref-date')?.value || r.date;
+      r.deadline     = document.getElementById('edit-ref-deadline')?.value || '';
+      r.requestedBy  = document.getElementById('edit-ref-by')?.value?.trim() || r.requestedBy;
+      r.priority     = document.getElementById('edit-ref-priority')?.value || 'normal';
+      r.actionType   = document.getElementById('edit-ref-action')?.value?.trim() || r.actionType;
+      r.regarding    = document.getElementById('edit-ref-re')?.value?.trim() || '';
+      r.area         = document.getElementById('edit-ref-area')?.value || '';
+      r.staffInvolved= document.getElementById('edit-ref-staff')?.value?.trim() || '';
+      r.context      = document.getElementById('edit-ref-context')?.value?.trim() || '';
+      r.notes        = document.getElementById('edit-ref-notes')?.value?.trim() || '';
+      markDirty();
+      closeModal();
+      renderReferralInbox();
+      renderWeeklyView();
+      toast('Referral updated', 'success');
+    }},
+    { label: 'Cancel', cls: 'btn-ghost', action: closeModal },
+  ]);
+}
+
+/* ── NEXT ACTIONS (Issue 4) ──────────────────────────────────── */
+
+const NEXT_ACTION_TYPES = [
+  { key: 'meeting',     label: 'Meeting',         icon: '🤝' },
+  { key: 'coaching',    label: '1:1 Coaching',    icon: '💬' },
+  { key: 'email',       label: 'Email / Message', icon: '📧' },
+  { key: 'teach-meet',  label: 'Teach-Meet',      icon: '🎤' },
+  { key: 'research',    label: 'Research',         icon: '🔍' },
+  { key: 'observation', label: 'Learning Walk',    icon: '👁' },
+  { key: 'health-check',label: 'Health Check',    icon: '✅' },
+  { key: 'resource',    label: 'Create resource',  icon: '📄' },
+  { key: 'other',       label: 'Other',            icon: '➕' },
+];
+
+function openNextActionsModal(referralId) {
+  const r = referralId ? DB.referrals.find(x => x.id === referralId) : null;
+  const contextNote = r
+    ? `${r.actionType}${r.regarding ? ' — ' + r.regarding : ''} (from ${r.requestedBy})`
+    : '';
+
+  const typeButtons = NEXT_ACTION_TYPES.map(t =>
+    `<button type="button"
+      class="next-action-btn"
+      id="nat-${t.key}"
+      onclick="selectNextActionType('${t.key}')"
+      aria-pressed="false"
+      style="display:flex;align-items:center;gap:.4rem;padding:.45rem .8rem;
+             border:2px solid var(--border);border-radius:var(--radius);background:var(--surface);
+             font-size:.8rem;font-family:var(--font-sans);cursor:pointer;white-space:nowrap;
+             transition:border-color .15s,background .15s">
+      <span aria-hidden="true">${t.icon}</span>${t.label}
+    </button>`
+  ).join('');
+
+  openModal('➜ Next action', `
+    ${contextNote ? `<div class="card mb-12" style="background:var(--bg-subtle)">
+      <div class="text-xs text-muted mb-2">Referral</div>
+      <p class="text-sm fw-600">${esc(contextNote)}</p>
+    </div>` : ''}
+
+    <div class="form-group mb-12">
+      <label>What type of action is this?</label>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem" role="group" aria-label="Action type">
+        ${typeButtons}
+      </div>
+      <input type="hidden" id="next-action-type" value="">
+    </div>
+
+    <div class="form-group">
+      <label for="next-action-title">Task title <span class="req" aria-hidden="true">*</span></label>
+      <input type="text" id="next-action-title"
+        placeholder="e.g. Email Richard Hanney to arrange HoA planning session">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="next-action-person">Involve / assigned to</label>
+        <input type="text" id="next-action-person"
+          placeholder="Name of person involved" value="${r?.staffInvolved||''}">
+      </div>
+      <div class="form-group">
+        <label for="next-action-deadline">Sub-deadline</label>
+        <input type="date" id="next-action-deadline">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="next-action-priority">Priority</label>
+        <select id="next-action-priority">
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="next-action-notes">Notes / context for this action</label>
+      <textarea id="next-action-notes" rows="2"
+        placeholder="Any context useful when you come back to this task">${contextNote ? 'Re: ' + contextNote : ''}</textarea>
+    </div>
+
+    <div class="toggle-row mt-8">
+      <span class="toggle-label">Open Quick Capture pre-loaded with this context when saving</span>
+      <label class="toggle-switch" aria-label="Open quick capture">
+        <input type="checkbox" id="next-action-open-qc" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  `, [
+    { label: 'Create action', cls: 'btn-primary', action: () => saveNextAction(referralId) },
+    { label: 'Cancel', cls: 'btn-ghost', action: closeModal },
+  ]);
+}
+
+function selectNextActionType(key) {
+  // Toggle button states
+  document.querySelectorAll('.next-action-btn').forEach(btn => {
+    const isThis = btn.id === 'nat-' + key;
+    btn.style.borderColor    = isThis ? 'var(--navy-800)' : 'var(--border)';
+    btn.style.background     = isThis ? 'var(--navy-800)' : 'var(--surface)';
+    btn.style.color          = isThis ? '#fff' : '';
+    btn.setAttribute('aria-pressed', String(isThis));
+  });
+  document.getElementById('next-action-type').value = key;
+
+  // Auto-fill title if empty
+  const titleEl = document.getElementById('next-action-title');
+  if (titleEl && !titleEl.value) {
+    const t = NEXT_ACTION_TYPES.find(x => x.key === key);
+    if (t) titleEl.value = t.label + ' — ';
+    titleEl.focus();
+    titleEl.setSelectionRange(titleEl.value.length, titleEl.value.length);
+  }
+}
+
+function saveNextAction(referralId) {
+  const type     = document.getElementById('next-action-type')?.value;
+  const title    = document.getElementById('next-action-title')?.value?.trim();
+  const person   = document.getElementById('next-action-person')?.value?.trim();
+  const deadline = document.getElementById('next-action-deadline')?.value;
+  const priority = document.getElementById('next-action-priority')?.value || 'normal';
+  const notes    = document.getElementById('next-action-notes')?.value?.trim();
+  const openQC   = document.getElementById('next-action-open-qc')?.checked;
+
+  if (!title) { toast('Task title required', 'error'); document.getElementById('next-action-title')?.focus(); return; }
+
+  const r = referralId ? DB.referrals.find(x => x.id === referralId) : null;
+  const thread = r?.threadId ? DB.threads.find(t => t.id === r.threadId) : null;
+
+  const task = {
+    id:          genId('task'),
+    title,
+    type:        type || 'other',
+    status:      'todo',
+    priority,
+    deadline:    deadline || '',
+    assignedTo:  person || '',
+    requestedBy: r?.requestedBy || '',
+    referralId:  referralId || '',
+    threadId:    thread?.id || '',
+    notes,
+    created:     new Date().toISOString(),
+    completedDate: '',
+  };
+
+  DB.tasks.unshift(task);
+  if (thread) {
+    if (!thread.taskIds) thread.taskIds = [];
+    thread.taskIds.push(task.id);
+  }
+  markDirty();
+
+  closeModal();
+  renderWeeklyView();
+  renderReferralInbox();
+  renderThreads();
+  toast('Action created', 'success');
+
+  // Open Quick Capture pre-loaded with context
+  if (openQC && r) {
+    setTimeout(() => {
+      _qcThreadId = thread?.id || '';
+      navigateTo('quick-capture');
+      // Pre-fill context
+      setTimeout(() => {
+        const notesEl = document.getElementById('qc-notes');
+        if (notesEl && !notesEl.value) {
+          const actionType = NEXT_ACTION_TYPES.find(x => x.key === type);
+          notesEl.value =
+            `${actionType?.label || type || 'Action'} — ${r.actionType}${r.regarding ? ' re: ' + r.regarding : ''}\n` +
+            `From: ${r.requestedBy}${person ? ' · Involving: ' + person : ''}\n` +
+            (notes ? '\n' + notes : '');
+        }
+        const titleEl = document.getElementById('qc-title');
+        if (titleEl && !titleEl.value) titleEl.value = title;
+      }, 300);
+    }, 100);
+  }
+}
+
 function markReferralComplete(id) {
   const r = DB.referrals.find(x => x.id === id);
   if (!r) return;
   r.status = 'complete';
+  markDirty();
   renderReferralInbox();
   renderWeeklyView();
   toast('Referral marked complete', 'success');
@@ -631,6 +1029,7 @@ function markReferralComplete(id) {
 function deleteReferral(id) {
   if (!confirm('Delete this referral?')) return;
   DB.referrals = DB.referrals.filter(r => r.id !== id);
+  markDirty();
   renderReferralInbox();
   renderWeeklyView();
   toast('Referral deleted');
@@ -853,6 +1252,8 @@ function openThreadDetail(threadId) {
       <span class="badge ${t.status==='active'?'badge-teal':t.status==='closed'?'badge-green':'badge-amber'}">${t.status.replace('-',' ')}</span>
       <span class="badge">Started ${fmtDate(t.created)}</span>
       <span class="badge">${entries.length} entr${entries.length===1?'y':'ies'}</span>
+      ${t.area ? `<span class="badge">${esc(t.area)}</span>` : ''}
+      ${t.initiatedBy ? `<span class="badge">From: ${esc(t.initiatedBy)}</span>` : ''}
     </div>
     ${t.impactSummary ? `<div class="log-entry status-complete mb-16">
       <div class="log-meta">Impact summary</div>
@@ -862,12 +1263,23 @@ function openThreadDetail(threadId) {
     ${entriesHtml}
     ${tasksHtml}
   `, [
-    { label: '+ Add entry', cls: 'btn-primary', action: () => { closeModal(); openQuickCaptureForThread(threadId); } },
+    { label: '➜ Next action', cls: 'btn-primary', action: () => {
+        const ref = DB.referrals.find(r => r.threadId === threadId);
+        closeModal();
+        openNextActionsModal(ref?.id || null);
+        // pass thread context if no referral
+        if (!ref) setTimeout(() => {
+          const el = document.getElementById('next-action-notes');
+          if (el && !el.value) el.value = 'Thread: ' + t.name;
+        }, 200);
+      }
+    },
+    { label: '+ Add entry', cls: 'btn-secondary', action: () => { closeModal(); openQuickCaptureForThread(threadId); } },
     { label: '+ Task',      cls: 'btn-secondary', action: () => { closeModal(); addManualTask(threadId); } },
     t.status !== 'closed'
-      ? { label: 'Close thread', cls: 'btn-teal', action: () => { closeModal(); closeThread(threadId); } }
-      : { label: 'Re-open', cls: 'btn-secondary', action: () => { closeModal(); setThreadStatus(threadId, 'active'); } },
-    { label: 'Close', cls: 'btn-ghost', action: closeModal },
+      ? { label: 'Close thread', cls: 'btn-ghost', action: () => { closeModal(); closeThread(threadId); } }
+      : { label: 'Re-open', cls: 'btn-ghost', action: () => { closeModal(); setThreadStatus(threadId, 'active'); } },
+    { label: '✕', cls: 'btn-ghost', action: closeModal },
   ]);
 }
 
@@ -880,47 +1292,71 @@ function renderWeeklyView() {
   renderWeeklyRecent();
 }
 
+function getWeekStart() {
+  const stored = localStorage.getItem('dpc-week-start');
+  if (stored) return stored;
+  return getThisMonday();
+}
+
+function getThisMonday() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().split('T')[0];
+}
+
+function getWeekEnd(weekStart) {
+  const d = new Date(weekStart);
+  d.setDate(d.getDate() + 6);
+  return d.toISOString().split('T')[0];
+}
+
+function setWeekStart(val) {
+  localStorage.setItem('dpc-week-start', val);
+  renderWeeklyView();
+}
+
 function renderWeeklyTasks() {
   const el = document.getElementById('weekly-tasks-list');
   if (!el) return;
 
-  const todayStr = today();
-  const tasks = DB.tasks
-    .filter(t => t.status !== 'done')
-    .sort((a, b) => {
-      // Overdue first, then by deadline, then by priority
-      const ao = a.deadline && a.deadline < todayStr;
-      const bo = b.deadline && b.deadline < todayStr;
-      if (ao && !bo) return -1;
-      if (!ao && bo) return 1;
-      const pd = { urgent:0, high:1, normal:2 };
-      if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
-      if (a.deadline) return -1;
-      if (b.deadline) return 1;
-      return (pd[a.priority]||2) - (pd[b.priority]||2);
-    });
+  const weekStart = getWeekStart();
+  const weekEnd   = getWeekEnd(weekStart);
+  const todayStr  = today();
 
-  if (!tasks.length) {
-    el.innerHTML = `<div class="empty-state"><p>No outstanding tasks. Inbox is clear ✓</p></div>`;
-    return;
+  // Week picker
+  const pickerContainer = document.getElementById('week-picker-row');
+  if (pickerContainer) {
+    pickerContainer.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;flex-wrap:wrap">
+        <label for="week-start-input" style="font-size:.75rem;font-weight:600;color:var(--text-muted)">Week starting</label>
+        <input type="date" id="week-start-input" value="${weekStart}"
+          style="font-size:.8rem;padding:.25rem .5rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)"
+          onchange="setWeekStart(this.value)" aria-label="Week start date">
+        <button class="btn btn-sm btn-secondary" onclick="setWeekStart(getThisMonday())" style="font-size:.72rem">This week</button>
+        <span style="font-size:.72rem;color:var(--text-muted);font-family:var(--font-mono)">${weekStart} → ${weekEnd}</span>
+      </div>`;
   }
 
-  el.innerHTML = tasks.map(t => {
+  const renderTask = t => {
     const overdue  = t.deadline && t.deadline < todayStr;
     const dueToday = t.deadline === todayStr;
     const thread   = t.threadId ? DB.threads.find(th => th.id === t.threadId) : null;
-    return `<div class="task-item" role="listitem"
+    return `<div class="task-item" role="listitem" id="task-item-${t.id}"
       tabindex="0" onkeydown="if(event.key==='Enter')completeTask('${t.id}')"
       aria-label="${esc(t.title)}${t.deadline ? ', due '+fmtDate(t.deadline) : ''}">
-      <div class="task-checkbox" onclick="completeTask('${t.id}')"
-        role="checkbox" aria-checked="false" tabindex="-1"
+      <div class="task-checkbox${t.status==='done'?' done':''}" onclick="completeTask('${t.id}')"
+        role="checkbox" aria-checked="${t.status==='done'}" tabindex="-1"
         style="border-color:${overdue?'var(--red-700)':dueToday?'var(--amber-700)':'var(--border-strong)'}">
+        ${t.status==='done'?'✓':''}
       </div>
       <div class="task-body">
-        <div class="task-title">${esc(t.title)}</div>
+        <div class="task-title${t.status==='done'?' done':''}">${esc(t.title)}</div>
         <div class="task-meta">
+          ${t.assignedTo ? '<strong>'+esc(t.assignedTo)+'</strong> · ' : ''}
           ${t.requestedBy ? esc(t.requestedBy)+' · ' : ''}
-          ${thread ? esc(thread.name.substring(0,40)) : (t.type||'')}
+          ${thread ? esc(thread.name.substring(0,35)) : (t.type||'')}
         </div>
       </div>
       <div class="flex flex-column gap-4" style="align-items:flex-end;flex-shrink:0">
@@ -932,7 +1368,33 @@ function renderWeeklyTasks() {
           onclick="openEntryFormForTask('${t.id}')" aria-label="Start ${esc(t.type)}">Start</button>` : ''}
       </div>
     </div>`;
-  }).join('');
+  };
+
+  // Tasks due this week or overdue
+  const tasks = DB.tasks
+    .filter(t => t.status !== 'done' && t.deadline && t.deadline <= weekEnd)
+    .sort((a, b) => {
+      const ao = a.deadline < todayStr, bo = b.deadline < todayStr;
+      if (ao && !bo) return -1;
+      if (!ao && bo) return 1;
+      if (a.deadline !== b.deadline) return a.deadline.localeCompare(b.deadline);
+      const pd = {urgent:0,high:1,normal:2};
+      return (pd[a.priority]||2) - (pd[b.priority]||2);
+    });
+
+  const undated = DB.tasks.filter(t => t.status !== 'done' && !t.deadline);
+
+  if (!tasks.length && !undated.length) {
+    el.innerHTML = `<div class="empty-state"><p>No tasks due this week. Clear inbox ✓</p></div>`;
+    return;
+  }
+
+  let html = tasks.map(renderTask).join('');
+  if (undated.length) {
+    html += `<div class="card-title mt-16 mb-8" style="font-size:.7rem;color:var(--text-muted)">No deadline set (${undated.length})</div>`;
+    html += undated.map(renderTask).join('');
+  }
+  el.innerHTML = html;
 }
 
 function renderWeeklyThreads() {
