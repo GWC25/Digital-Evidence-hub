@@ -423,6 +423,8 @@ function today() {
 }
 
 function saveJSON() {
+  _dirty = false;
+  if (_autosaveTimer) clearTimeout(_autosaveTimer);
   DB.meta.lastSaved = new Date().toISOString();
   const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
@@ -562,6 +564,71 @@ function snapshotHoA(tracker, reason) {
 }
 
 // Update JSON status indicator in header
+/* ── AUTOSAVE TO LOCALSTORAGE ───────────────────────────────── */
+// Protects against accidental navigation. Not a substitute for
+// the JSON save — just a safety net for unsaved session work.
+const LS_KEY = 'dpc-hub-autosave';
+let _autosaveTimer = null;
+let _dirty = false;
+
+function markDirty() {
+  _dirty = true;
+  scheduleAutosave();
+}
+
+function scheduleAutosave() {
+  if (_autosaveTimer) clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(doAutosave, 8000); // 8 seconds after last change
+}
+
+function doAutosave() {
+  if (!_dirty) return;
+  try {
+    const snapshot = JSON.stringify(DB);
+    localStorage.setItem(LS_KEY, snapshot);
+    localStorage.setItem(LS_KEY + '-ts', new Date().toISOString());
+    _dirty = false;
+    updateAutosaveStatus();
+  } catch(e) { /* quota exceeded — ignore */ }
+}
+
+function updateAutosaveStatus() {
+  const el = document.getElementById('autosave-status');
+  if (!el) return;
+  const ts = localStorage.getItem(LS_KEY + '-ts');
+  el.textContent = ts
+    ? 'Auto-saved ' + new Date(ts).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })
+    : '';
+}
+
+function restoreAutosave() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const ts  = localStorage.getItem(LS_KEY + '-ts');
+    const age = ts ? Math.round((Date.now() - new Date(ts)) / 60000) : '?';
+    if (!confirm(`An auto-saved session was found (${age} minutes ago).\n\nRestore it? Click Cancel to start fresh.`)) return false;
+    const loaded = JSON.parse(raw);
+    mergeLoadedData(loaded);
+    updateJSONStatus(true, 'Auto-restored session');
+    refreshAllViews();
+    toast('Session restored from auto-save', 'success');
+    return true;
+  } catch(e) { return false; }
+}
+
+// Warn on browser navigation away if dirty
+window.addEventListener('beforeunload', e => {
+  doAutosave(); // flush immediately
+  if (_dirty) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved changes. Use the Save button to download your data file.';
+  }
+});
+
+// Patch saveJSON to also clear autosave + dirty flag
+const _origSaveJSON = typeof saveJSON === 'function' ? saveJSON : null;
+
 function updateJSONStatus(linked, filename) {
   const dot  = document.getElementById('json-dot');
   const text = document.getElementById('json-status-text');
