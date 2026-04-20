@@ -255,6 +255,7 @@ function saveQuickCapture() {
   };
 
   DB.entries.unshift(entry);
+  markDirty();
 
   // Link to thread
   if (threadId) linkEntryToThread(entry.id, threadId);
@@ -614,6 +615,7 @@ function openAddOwnCPDModal() {
         created:  new Date().toISOString(),
       };
       DB.entries.unshift(entry);
+  markDirty();
       closeModal();
       renderOwnCPDList();
       renderDashboard();
@@ -724,6 +726,7 @@ function openAddExternalModal() {
         created:  new Date().toISOString(),
       };
       DB.entries.unshift(entry);
+  markDirty();
       closeModal();
       renderExternalCPDList();
       renderDashboard();
